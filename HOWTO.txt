@@ -1,0 +1,16 @@
+Files are:
+
+cl.sh       Unix shell script to compile specified executable linking against ROOT library
+
+Source code: testzbi.cpp and testchi2.cpp
+
+To make each:
+
+./cl.sh testzbi
+./cl.sh testchi2
+
+testzbi does some significance calculations using z-binomial etc.
+
+testchi2 is a not completely, but somewhat 
+unrelated toy MC for generating chi-squared distributed variates that 
+I happened to have in the same directory.
