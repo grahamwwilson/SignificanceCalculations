@@ -3,7 +3,7 @@ SIGMAB 0.338903
 nobs =           13
 muB =            3.38903
 Error fraction = 0.1
-Generating toys  10000000
-ncount 845 p-value: 8.45e-05 probability of observing nobs or more events 
+Generating toys  125000000
+ncount 10136 p-value: 8.1088e-05 +- 8.05389e-07 probability of observing nobs or more events 
 Translating to a Gaussian z-score 
-z-score (ie. signed pull equivalent): 3.76135 sigma 
+z-score (ie. signed pull equivalent): 3.77164 sigma 

@@ -12,21 +12,17 @@
 int main(int argc, char *argv[]){
 
    unsigned int seed = 4359;
-   unsigned int ielement = 12345;
-   if(argc==3){
+   if(argc==2){
       seed = atoi(argv[1]);
    }
    std::cout << "Using seed " << seed << std::endl;
 
    const unsigned int N = 100;
-   const unsigned int NGENERATED = 10000000;
+   const unsigned int NGENERATED = 125000000;   // Set so that pvalue MC fractional uncertainty is 1% for default assumptions that lead to pvalue circa 8.2e-5.
+   
+// Note depending on the actual p-value one may need a lot of toys, especially for very small p-values.  
 
    TRandom3 *rg = new TRandom3(seed);
-//   TFile *f = new TFile("out.root","RECREATE");
-//   TH1D* hist = new TH1D("hist","hist",100,0.0,200.0);
-//   TH1D* hpvalue = new TH1D("hpvalue","hpvalue",100,0.0,1.0);
-   double mu;
-   int n;
    
    const double MUB = 3.38903;
    const double FRACERROR = 0.10;     // 10% error
@@ -38,24 +34,22 @@ int main(int argc, char *argv[]){
 
 // Simulate a Poisson distribution with the underlying mean being a Gaussianly distributed random number.
    for (int i=0; i<NGENERATED; i++){
-        mu = MUB;
-        if(SIGMAB/MUB > 1.0e-4){
-           mu = rg->Gaus(MUB, SIGMAB);
+        double mu = MUB;
+        if(FRACERROR > 1.0e-4){
+            mu = rg->Gaus(MUB, SIGMAB);  // Choose Poisson mean, mu, from Gaussian with mean and rms of MUB and SIGMAB
         }
-        n = rg->Poisson(mu);
-        if(n >= NOBS)ncount++;        //Count toys with n exceeding or equal to the observed counts
+        int n = rg->Poisson(mu);         // Generate Poisson distributed random number, n, based on Poisson mean of mu  
+        if(n >= NOBS)ncount++;           // Count toys with n exceeding or equal to the observed counts
    }
-//   hist->Draw();                    // Should be distributed like chi^2_N  
-//   hpvalue->Draw();                 // Should be uniform from [0,1]
-//   f->Write();
    
    double pvalue = double(ncount)/double(NGENERATED);
+   double dp=sqrt(pvalue*(1.0-pvalue)/double(NGENERATED));  //binomial error
 
    std::cout << "nobs =           "  << NOBS << std::endl;
    std::cout << "muB =            "  << MUB << std::endl;
    std::cout << "Error fraction = "  << FRACERROR << std::endl;
    std::cout << "Generating toys  "  << NGENERATED << std::endl;
-   std::cout << "ncount " << ncount << " p-value: " << pvalue << " probability of observing nobs or more events " << std::endl;
+   std::cout << "ncount " << ncount << " p-value: " << pvalue << " +- " << dp << " probability of observing nobs or more events " << std::endl;
    
    std::cout << "Translating to a Gaussian z-score " << std::endl;
    std::cout << "z-score (ie. signed pull equivalent): " << TMath::NormQuantile(1.0-pvalue) << " sigma " << std::endl;
