@@ -2,12 +2,18 @@ Files are:
 
 cl.sh       Unix shell script to compile specified executable linking against ROOT library
 
-Source code: testzbi.cpp and testchi2.cpp
+Source code: testPoisson.cpp testzbi.cpp, testchi2.cpp
 
 To make each:
 
+./cl.sh testPoisson
 ./cl.sh testzbi
 ./cl.sh testchi2
+
+testPoisson calculates observed significance using observed event number, 
+background-only expectation, and the uncertainty on this background. 
+The underlying model is assumed to be Poisson with the mean parameter being 
+normally distributed.
 
 testzbi does some significance calculations using z-binomial etc.
 
