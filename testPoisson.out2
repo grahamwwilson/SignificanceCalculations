@@ -1,0 +1,10 @@
+Using seed 4359
+SIGMAB 32.8129
+nobs =           787
+muB =            904.684
+Error fraction = 0.03627
+Generating toys  10000000
+nuppertail 9965764 p-value: 0.996576 +- 1.84713e-05 probability of observing nobs or more events 
+nlowertail 36699 q-value: 0.0036699 +- 1.91218e-05 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score lower (ie. signed pull equivalent): -2.68102 sigma 
