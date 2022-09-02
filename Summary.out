@@ -1,0 +1,12 @@
+Top 10 Leading normalized residuals sorted by pull O-E/sqrt(E+VF)
+                                               RegionName  BinNumber  Pull_O-E/sqrt(E+VF) data  bprefit   bpostfit  ferr(%)  zPull
+473   Ch1L_elpm_slvr_1jge1svS_ge1jISR_PTISR0_gamT0_SVeta0          2         5.213856     13    3.28981    3.38383   3.94    +3.86
+886               Ch1L_mup_gold_0j0svS_ge1jge1bISR_PTISR1          3         4.689327     35   18.12850   16.04270   3.42    +3.98
+735            Ch1L_lpm_gold_3j1bS_ge1j0bISR_PTISR0_gamT1          4         3.857803     38   16.51670   20.44050   2.58    +3.38
+984                  Ch1L_mupm_slvr_1j0svS_ge1jISR_PTISR0          1        -3.586047    787  823.90700  904.68400   1.45    -3.65
+1268           Ch2L_noZ_gold_1j0bS_ge1j0bISR_PTISR0_gamT0          1         3.496100    113   65.60940   79.85710   3.96    +3.24 
+985                  Ch1L_mupm_slvr_1j0svS_ge1jISR_PTISR0          2        -3.467514    118  153.26300  163.30400   1.67    -3.59
+705            Ch1L_lpm_gold_3j0bS_ge1j0bISR_PTISR1_gamT0          2        -3.224744     27   55.58180   50.54420   3.29    -3.45
+1160     Ch2L_Zstar_gold_ge2jge1bS_ge1j0bISR_PTISR0_gamT1          1         3.146387     21    7.21476   10.60210   5.33    +2.69
+1218                  Ch2L_elmu_slvr_ge2jS_ge1jISR_PTISR0          3         3.080125    159   94.88350  122.76800   3.22    +2.91
+380   Ch1L_elpm_bron_0jge1svS_ge1jISR_PTISR0_gamT0_SVeta1          1         2.990918     10    4.06065    3.98662   5.92    +2.39

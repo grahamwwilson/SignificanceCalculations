@@ -1,4 +1,7 @@
 testPoisson
+testbeta
+testPoissonArgs
+testbeta.cpp
 testzbi
 testchi2
 out.root

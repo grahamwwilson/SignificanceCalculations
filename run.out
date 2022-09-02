@@ -1,0 +1,110 @@
+Generating 170 million toys
+Using seed 4359
+MUB  = 3.38383
+NOBS = 13
+FRACERROR = 0.0394201
+SIGMAB 0.133391
+nuppertail 9800 p-value: 5.76471e-05 +- 5.82306e-07 probability of observing nobs or more events 
+nlowertail 169997553 q-value: 0.999986 +- 2.90981e-07 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score upper (ie. signed pull equivalent): 3.85592 sigma 
+ 
+Generating 330 million toys
+Using seed 4359
+MUB  = 16.0427
+NOBS = 35
+FRACERROR = 0.0341591
+SIGMAB 0.548004
+nuppertail 11259 p-value: 3.41182e-05 +- 3.21535e-07 probability of observing nobs or more events 
+nlowertail 329994941 q-value: 0.999985 +- 2.15534e-07 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score upper (ie. signed pull equivalent): 3.98235 sigma 
+ 
+Generating 30 million toys
+Using seed 4359
+MUB  = 20.4405
+NOBS = 38
+FRACERROR = 0.0257634
+SIGMAB 0.526616
+nuppertail 10919 p-value: 0.000363967 +- 3.4825e-06 probability of observing nobs or more events 
+nlowertail 29994442 q-value: 0.999815 +- 2.48484e-06 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score upper (ie. signed pull equivalent): 3.37884 sigma 
+ 
+Generating 70 million toys
+Using seed 4359
+MUB  = 904.684
+NOBS = 787
+FRACERROR = 0.0145086
+SIGMAB 13.1257
+nuppertail 69991973 p-value: 0.999885 +- 1.27983e-06 probability of observing nobs or more events 
+nlowertail 9148 q-value: 0.000130686 +- 1.36627e-06 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score lower (ie. signed pull equivalent): -3.65085 sigma 
+ 
+Generating 18 million toys
+Using seed 4359
+MUB  = 79.8571
+NOBS = 113
+FRACERROR = 0.0396242
+SIGMAB 3.16427
+nuppertail 10666 p-value: 0.000592556 +- 5.73587e-06 probability of observing nobs or more events 
+nlowertail 17992370 q-value: 0.999576 +- 4.85174e-06 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score upper (ie. signed pull equivalent): 3.24244 sigma 
+ 
+Generating 60 million toys
+Using seed 4359
+MUB  = 163.304
+NOBS = 118
+FRACERROR = 0.0166548
+SIGMAB 2.71979
+nuppertail 59992983 p-value: 0.999883 +- 1.39604e-06 probability of observing nobs or more events 
+nlowertail 9767 q-value: 0.000162783 +- 1.647e-06 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score lower (ie. signed pull equivalent): -3.59406 sigma 
+ 
+Generating 40 million toys
+Using seed 4359
+MUB  = 50.5442
+NOBS = 27
+FRACERROR = 0.0328804
+SIGMAB 1.66191
+nuppertail 39993954 p-value: 0.999849 +- 1.94375e-06 probability of observing nobs or more events 
+nlowertail 11406 q-value: 0.00028515 +- 2.66959e-06 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score lower (ie. signed pull equivalent): -3.44536 sigma 
+ 
+Generating 10 million toys
+Using seed 4359
+MUB  = 10.6021
+NOBS = 21
+FRACERROR = 0.0532737
+SIGMAB 0.564813
+nuppertail 36066 p-value: 0.0036066 +- 1.89568e-05 probability of observing nobs or more events 
+nlowertail 9982694 q-value: 0.998269 +- 1.31438e-05 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score upper (ie. signed pull equivalent): 2.68684 sigma 
+ 
+Generating 10 million toys
+Using seed 4359
+MUB  = 122.768
+NOBS = 159
+FRACERROR = 0.032176
+SIGMAB 3.95018
+nuppertail 18105 p-value: 0.0018105 +- 1.34433e-05 probability of observing nobs or more events 
+nlowertail 9985866 q-value: 0.998587 +- 1.18802e-05 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score upper (ie. signed pull equivalent): 2.90942 sigma 
+ 
+Generating 10 million toys
+Using seed 4359
+MUB  = 3.98662
+NOBS = 10
+FRACERROR = 0.0591878
+SIGMAB 0.235959
+nuppertail 84253 p-value: 0.0084253 +- 2.89038e-05 probability of observing nobs or more events 
+nlowertail 9970261 q-value: 0.997026 +- 1.72193e-05 probability of observing nobs or less events 
+Translating to a Gaussian z-score 
+z-score upper (ie. signed pull equivalent): 2.38995 sigma 
+ 
