@@ -28,6 +28,49 @@ struct AnalysisBin {
     double postfitMean {};
     double postfitError {};
     double satChisq {};
+    bool is0L(){
+        std::string s = "0L";
+        bool result = false;
+        if(regionName.find(s) != std::string::npos)result = true;
+        return result;
+    }
+    bool is1L(){
+        std::string s = "1L";
+        bool result = false;
+        if(regionName.find(s) != std::string::npos)result = true;
+        return result;
+    }
+    bool is2L(){
+        std::string s = "2L";
+        bool result = false;
+        if(regionName.find(s) != std::string::npos)result = true;
+        return result;
+    }
+    bool is3L(){
+        std::string s = "3L";
+        bool result = false;
+        if(regionName.find(s) != std::string::npos)result = true;
+        return result;
+    }
+    bool isBronze(){
+        std::string s = "_bron";
+        bool result = false;
+        if(regionName.find(s) != std::string::npos)result = true;
+        return result;
+    }
+    bool isSV(){
+        std::string s = "SVeta";
+        bool result = false;
+        if(regionName.find(s) != std::string::npos)result = true;
+        return result;
+    }
+    bool is0L0J(){
+        std::string s = "Ch0L_0_0j";
+        bool result = false;
+        if(regionName.find(s) != std::string::npos)result = true;
+        return result;    
+    }           
+        
  // Standard sorting criterion    
     bool operator < (const AnalysisBin & aBin) const
     {
@@ -59,7 +102,7 @@ std::vector<std::tuple<int, unsigned long int, int, int>> vtoys;  // Design with
 std::vector<AnalysisBin> vAnaBins;
 std::vector<statAnalysisBin> vstatAnaBins;
 
-void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int baseseed){
+void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int baseseed, std::string infile){
 
     // cout << "Hello from Parser " << endl;
     
@@ -73,9 +116,32 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
     TH1D* histz_censored = new TH1D("histz_censored","Data; Z-Score (Algorithm 0MH); Bins per 0.25",49,-6.125,6.125); 
     
     TH1D* nhist = new TH1D("nhist","Data; Z-Score (Algorithm 1); Bins per 0.25",31,-3.875,3.875);    
-    TH1D* nhistz = new TH1D("nhistz","Data; Z-Score (Algorithm 0MH); Bins per 0.25",31,-3.875,3.875);                   
+    TH1D* nhistz = new TH1D("nhistz","Data; Z-Score (Algorithm 0MH); Bins per 0.25",31,-3.875,3.875);
     
-    ifstream myfile("B120_7-2-24_all-1_Cropped.txt");
+    TH1D* mhist = new TH1D("mhist","Data; Z-Score (Algorithm 1); Bins per 0.25",32,-4.0,4.0);    
+    TH1D* mhistz = new TH1D("mhistz","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    
+    TH1D* mhistz0L = new TH1D("mhistz0L","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    TH1D* mhistz1L = new TH1D("mhistz1L","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    TH1D* mhistz2L = new TH1D("mhistz2L","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    TH1D* mhistz3L = new TH1D("mhistz3L","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    TH1D* mhistzSV = new TH1D("mhistzSV","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);    
+    TH1D* mhistzBronze = new TH1D("mhistzBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);
+    TH1D* mhistznonBronze = new TH1D("mhistznonBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    TH1D* mhistz1LnonBronze = new TH1D("mhistz1LnonBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    TH1D* mhistz2LnonBronze = new TH1D("mhistz2LnonBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    TH1D* mhistz3LnonBronze = new TH1D("mhistz3LnonBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);
+    
+    TH1D* mhistz0LSR = new TH1D("mhistz0LSR","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);     
+    TH1D* mhistz1LSR = new TH1D("mhistz1LSR","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    TH1D* mhistz2LSR = new TH1D("mhistz2LSR","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    TH1D* mhistz3LSR = new TH1D("mhistz3LSR","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);               
+
+    TH1D* mhistzSRD0 = new TH1D("mhistzSRD0","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);
+    TH1D* mhistzSRD1 = new TH1D("mhistzSRD1","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);
+    TH1D* mhistzNSRD1 = new TH1D("mhistzNSRD1","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);    
+    
+    ifstream myfile(infile);
     
     int f1;    // nobs
     string f2; // regionName
@@ -179,12 +245,13 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
          if (stdev > 3.5) ntouse =  10000/ndivide;
          if (stdev > 4.0) ntouse =  40000/ndivide;
          if (stdev > 4.5) ntouse = 100000/ndivide;
-         if (stdev > 5.0) ntouse = 250000/ndivide;         
+         if (stdev > 5.0) ntouse = 250000/ndivide;
+         if (stdev > 6.0) ntouse = 1000000/ndivide;         
          
  // Throw toys if a good use of our time.
          double znew, zupper, zlower, zold, zscoreError;
          
-         if(stdev > 6.0){
+         if(stdev > 20.0){
              if(ndata > postfitMean){
                 znew = 5.01;
                 zupper = 5.01;
@@ -203,7 +270,9 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
              histz->Fill(znew); 
              hist->Fill(zold);
              nhistz->Fill(znew); 
-             nhist->Fill(zold);             
+             nhist->Fill(zold); 
+             mhistz->Fill(znew); 
+             mhist->Fill(zold);                          
              histzl->Fill(zlower);
              histzu->Fill(zupper);              
              // Even in this case we want to throw some toys (at least NTOSAVE) but not save the z-scores.
@@ -237,11 +306,42 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
              histz->Fill(znew); 
              hist->Fill(zold);
              nhistz->Fill(znew); 
-             nhist->Fill(zold);             
+             nhist->Fill(zold);  
+             mhistz->Fill(znew); 
+             mhist->Fill(zold);                          
              histzl->Fill(zlower);
              histzu->Fill(zupper);
              histz_censored->Fill(znew); 
-             hist_censored->Fill(zold);                  
+             hist_censored->Fill(zold);
+             
+             bool SR=false;
+             
+             if(el.is0L())mhistz0L->Fill(znew);
+             if(el.is1L())mhistz1L->Fill(znew);
+             if(el.is2L())mhistz2L->Fill(znew);
+             if(el.is3L())mhistz3L->Fill(znew);
+             if(el.isSV())mhistzSV->Fill(znew);             
+             if(el.isBronze()){
+                 mhistzBronze->Fill(znew);
+             }
+             else{
+                 mhistznonBronze->Fill(znew);
+                 if(el.is1L())mhistz1LnonBronze->Fill(znew);
+                 if(el.is2L())mhistz2LnonBronze->Fill(znew);
+                 if(el.is3L())mhistz3LnonBronze->Fill(znew);
+                 if( (el.is0L() && subBin > 3) || (el.is1L() && subBin > 2) || (el.is2L() && subBin >4) || el.is3L() ){
+                      SR = true;
+                      mhistzSRD1->Fill(znew);
+                 }  
+                 if(subBin > 2){
+                     mhistzSRD0->Fill(znew);
+                     if(el.is0L())mhistz0LSR->Fill(znew);                     
+                     if(el.is1L())mhistz1LSR->Fill(znew);
+                     if(el.is2L())mhistz2LSR->Fill(znew);
+                     if(el.is3L())mhistz3LSR->Fill(znew);                     
+                 }  
+             }
+             if(!SR)mhistzNSRD1->Fill(znew);                           
          }
 
 // Push bin into new struct.
@@ -282,6 +382,16 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
 // Sort vector using |zscore| (see struct implementation). Hopefully this works for the inherited one ...
 //    std::sort(vstatAnaBins.begin(), vstatAnaBins.end(), sort_by_abszscore );
     
+// Check string finding.
+/*    for (auto & el : vstatAnaBins){
+        auto id = el.id;
+        auto regionName = el.regionName;
+        if( el.is0L() ){
+            cout << "0L Bin " << id << " " << regionName << endl;
+        } 
+    }
+*/
+    
     f->Write();
     f->Close();         
 
@@ -303,8 +413,11 @@ int main(int argc, char** argv){
     int ndivide = 1;
     app.add_option("-d,--ndivide", ndivide, "Divisor for quick test");
     
-//    unsigned long int baseseed = 123456L;
-    unsigned long int baseseed = 125900L;    
+    std::string infilename = "B135_7-7-24_all_Modified_V1.txt";
+    app.add_option("-i,--infilename", infilename, "Input file from fit to parse");  
+    
+    unsigned long int baseseed = 123456L;
+ //   unsigned long int baseseed = 125900L;    
     app.add_option("-b,--baseseed", baseseed, "Base seed for toys");    
               
     CLI11_PARSE(app, argc, argv);
@@ -313,12 +426,13 @@ int main(int argc, char** argv){
     std::cout << "poissonOnly " << poissonOnly << endl;
     std::cout << "ntosave " << ntosave << endl;
     std::cout << "ndivide " << ndivide << endl;
-    std::cout << "baseseed " << baseseed << endl;    
+    std::cout << "baseseed " << baseseed << endl;
+    std::cout << "infilename " << infilename << endl;   
     
 // Global value
     NTOSAVE = ntosave;
 
-    Parser(nfactor, poissonOnly, ndivide, baseseed);
+    Parser(nfactor, poissonOnly, ndivide, baseseed, infilename);
     
 // Can access global toys vector
 // First sort it.
