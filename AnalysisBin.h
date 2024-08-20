@@ -1,11 +1,11 @@
 struct AnalysisBin {
-    int id {};
-    std::string regionName {};
-    int ndata {};
-    int subBin {};
-    double postfitMean {};
-    double postfitError {};
-    double satChisq {};
+    int id {};                  // Justin's unique bin id
+    std::string regionName {};  // regionName
+    int ndata {};               // observed number of data events
+    int subBin {};              // (RISR,Mperp) bin number (0-9)
+    double postfitMean {};      // Post-fit background mean
+    double postfitError {};     // Post-fit background uncertainty
+    double satChisq {};         // Barker-Cousins saturated chi-squared (added by GWW)
     bool is0L(){
         std::string s = "0L";
         bool result = false;
