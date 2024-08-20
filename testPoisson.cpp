@@ -26,13 +26,19 @@ int main(int argc, char *argv[]){
    TFile *f = new TFile("out.root","RECREATE");
    TH1D* hist = new TH1D("hist","hist",2000,-0.5,1999.5);   
    
+/*   const int NOBS = 787;   
    const double MUB = 904.684;
-//   const double FRACERROR = 0.032176;     // 10% error
-   const double FRACERROR = 0.03627;
+   const double FRACERROR = 0.03627; */
+   
+   const int NOBS = 67;   
+   const double MUB = 30.0;
+   const double FRACERROR = 0.258;   
+   
    const double SIGMAB = FRACERROR*MUB;  
-   const int NOBS = 787;
+
    int nuppertail = 0;
    int nlowertail = 0;
+   int nequal = 0;
    
    std::cout << "SIGMAB " << SIGMAB << std::endl;
 
@@ -45,6 +51,7 @@ int main(int argc, char *argv[]){
         int n = rg->Poisson(mu);         // Generate Poisson distributed random number, n, based on Poisson mean of mu  
         if(n >= NOBS)nuppertail++;       // Count toys with n exceeding or equal to the observed counts
         if(n <= NOBS)nlowertail++;       // Count toys with n less than or equalt to the observed counts
+        if(n==NOBS)nequal++;
         hist->Fill(double(n));
    }
    
@@ -56,12 +63,17 @@ int main(int argc, char *argv[]){
    double qvaluel = double(nlowertail)/double(NGENERATED);
    double dql=sqrt(qvaluel*(1.0-qvaluel)/double(NGENERATED));  //binomial error   
 
+   double pequal = double(nequal)/double(NGENERATED);
+   double dpequal=sqrt(pequal*(1.0-pequal)/double(NGENERATED));  //binomial error
+
    std::cout << "nobs =           "  << NOBS << std::endl;
    std::cout << "muB =            "  << MUB << std::endl;
    std::cout << "Error fraction = "  << FRACERROR << std::endl;
    std::cout << "Generating toys  "  << NGENERATED << std::endl;
    std::cout << "nuppertail " << nuppertail << " p-value: " << pvalueu << " +- " << dpu << " probability of observing nobs or more events " << std::endl;
-   std::cout << "nlowertail " << nlowertail << " q-value: " << qvaluel << " +- " << dql << " probability of observing nobs or less events " << std::endl;   
+   std::cout << "nlowertail " << nlowertail << " q-value: " << qvaluel << " +- " << dql << " probability of observing nobs or less events " << std::endl;
+   std::cout << "nequal     " << nequal     << " c-value: " << pequal  << " +- " << dpequal << " probability of observing exactly nobs events " << std::endl;       
+   
    
    std::cout << "Translating to a Gaussian z-score " << std::endl;
    if(NOBS >= MUB){

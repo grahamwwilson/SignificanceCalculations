@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
    
    const int NZCUT = 10;
    double nobs[NZCUT] = {  0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
-   double zcut[NZCUT] = {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0};      
+   double zcut[NZCUT] = {1.0, 2.0, 2.5, 2.75, 3.0, 3.25, 3.5, 4.0, 4.5, 5.0};      
 
 // Simulate many Gaussians
    for (int i=0; i<NGENERATED; i++){

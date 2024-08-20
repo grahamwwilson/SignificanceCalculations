@@ -14,85 +14,9 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include "AnalysisBin.h"
+#include "statAnalysisBin.h"
 using namespace std;
-
-// May be best to make a vector of structs. 
-//
-// Can a new struct inherit from an existing struct?
-
-struct AnalysisBin {
-    int id {};
-    std::string regionName {};
-    int ndata {};
-    int subBin {};
-    double postfitMean {};
-    double postfitError {};
-    double satChisq {};
-    bool is0L(){
-        std::string s = "0L";
-        bool result = false;
-        if(regionName.find(s) != std::string::npos)result = true;
-        return result;
-    }
-    bool is1L(){
-        std::string s = "1L";
-        bool result = false;
-        if(regionName.find(s) != std::string::npos)result = true;
-        return result;
-    }
-    bool is2L(){
-        std::string s = "2L";
-        bool result = false;
-        if(regionName.find(s) != std::string::npos)result = true;
-        return result;
-    }
-    bool is3L(){
-        std::string s = "3L";
-        bool result = false;
-        if(regionName.find(s) != std::string::npos)result = true;
-        return result;
-    }
-    bool isBronze(){
-        std::string s = "_bron";
-        bool result = false;
-        if(regionName.find(s) != std::string::npos)result = true;
-        return result;
-    }
-    bool isSV(){
-        std::string s = "SVeta";
-        bool result = false;
-        if(regionName.find(s) != std::string::npos)result = true;
-        return result;
-    }
-    bool is0L0J(){
-        std::string s = "Ch0L_0_0j";
-        bool result = false;
-        if(regionName.find(s) != std::string::npos)result = true;
-        return result;    
-    }           
-        
- // Standard sorting criterion    
-    bool operator < (const AnalysisBin & aBin) const
-    {
-        return satChisq > aBin.satChisq;
-    }
-};
-
-struct statAnalysisBin : AnalysisBin{
-    double zscore {};
-    double zscoreError {};
-    bool operator < (const statAnalysisBin & aBin) const
-    {
-         return abs(zscore) > abs(aBin.zscore);
-    }    
-       
-};
-
-bool sort_by_abszscore( const statAnalysisBin & lhs, const statAnalysisBin & rhs )
-{
-   
-   return abs(lhs.zscore) > abs(rhs.zscore);
-}
 
 int NTOSAVE {};
 std::vector<std::tuple<int, unsigned long int, int, int>> vtoys;  // Design with experiment-number, bin-id, nobs, seed. Can then sort by experiment number.
@@ -378,20 +302,7 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
                           << fixed << setprecision(5) << setw(10) << zscore << fixed << setprecision(5) << setw(10) << zscoreError <<
                           endl; 
     }                                     
-    
-// Sort vector using |zscore| (see struct implementation). Hopefully this works for the inherited one ...
-//    std::sort(vstatAnaBins.begin(), vstatAnaBins.end(), sort_by_abszscore );
-    
-// Check string finding.
-/*    for (auto & el : vstatAnaBins){
-        auto id = el.id;
-        auto regionName = el.regionName;
-        if( el.is0L() ){
-            cout << "0L Bin " << id << " " << regionName << endl;
-        } 
-    }
-*/
-    
+        
     f->Write();
     f->Close();         
 
@@ -399,7 +310,7 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
 
 int main(int argc, char** argv){
 
-    CLI::App app{"Parse fit result file"}; 
+    CLI::App app{"Calculate z-scores using toys from fit result file"}; 
     
     int nfactor = 100;
     app.add_option("-n,--nfactor", nfactor, "Thousand toy multiplier"); 
@@ -416,8 +327,8 @@ int main(int argc, char** argv){
     std::string infilename = "B135_7-7-24_all_Modified_V1.txt";
     app.add_option("-i,--infilename", infilename, "Input file from fit to parse");  
     
-    unsigned long int baseseed = 123456L;
- //   unsigned long int baseseed = 125900L;    
+//    unsigned long int baseseed = 123456L;
+    unsigned long int baseseed = 125900L;    
     app.add_option("-b,--baseseed", baseseed, "Base seed for toys");    
               
     CLI11_PARSE(app, argc, argv);
@@ -434,8 +345,7 @@ int main(int argc, char** argv){
 
     Parser(nfactor, poissonOnly, ndivide, baseseed, infilename);
     
-// Can access global toys vector
-// First sort it.
+// Sort global toys vector
     std::sort(vtoys.begin(), vtoys.end());
 
     std::ofstream fout;

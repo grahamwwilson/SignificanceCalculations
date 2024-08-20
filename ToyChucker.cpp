@@ -1,5 +1,47 @@
+int nQuantileCalls = 0;
 
+double MyQuantile(double p){
 
+// Protect against out of range problems with NormQuantile
+
+    nQuantileCalls +=1;
+    cout << "MyQuantile call " << nQuantileCalls << endl;
+
+    double q = 1.0 - p;
+    double value {};
+    
+    if( q<=0 ){
+        cout << "Error for MyQuantile with argument " << q << " Setting value of -19.999 " << endl;
+        value = -19.999;
+    }
+    else if (q >=1){
+        cout << "Error for MyQuantile with argument " << q << " Setting value of 19.999 " << endl;
+        value =  19.999;    
+    }
+    else{
+        value = TMath::NormQuantile(q);
+    }
+    
+    return value;
+}
+//
+// Returned tuple has the form
+//
+// Element  Type       Description
+//      
+// 0        int        Nobs
+// 1        double     mub
+// 2        double     NGENERATED
+// 3        double     p
+// 4        double     q
+// 5        double     e
+// 6        double     Zu 
+// 7        double     dZu
+// 8        double     Zl
+// 9        double     dZl
+// 10       double     Zm
+// 11       double     dZm
+//
 std::tuple<int, double, int, double, double, double, double, double, double, double, double, double> 
    ToyChucker(int NFACTOR, int NOBSMIN, int NOBSMAX, double MUB, double FRACERROR, unsigned long int seed, int id ){
 
@@ -91,20 +133,20 @@ std::tuple<int, double, int, double, double, double, double, double, double, dou
         
 // Rather than apply the validity conditions of the estimators, let's first calculate them all 
 // and defer figuring out the former.
-        double zscoreu      =  TMath::NormQuantile(1.0 - vpvalue[j].first);
-        double zscoreu_UP   =  TMath::NormQuantile(1.0 - (vpvalue[j].first - vpvalue[j].second));
-        double zscoreu_DOWN =  TMath::NormQuantile(1.0 - (vpvalue[j].first + vpvalue[j].second));
+        double zscoreu      =  MyQuantile( vpvalue[j].first );
+        double zscoreu_UP   =  MyQuantile( vpvalue[j].first - vpvalue[j].second );
+        double zscoreu_DOWN =  MyQuantile( vpvalue[j].first + vpvalue[j].second );
         double zscoreu_ERR = 0.5*(zscoreu_UP - zscoreu_DOWN); 
         cout << "zscoreu: " << zscoreu << " " << zscoreu_UP << " " << zscoreu_DOWN << " " << zscoreu_ERR << endl;
                
-        double zscorel      = -TMath::NormQuantile(1.0 - vqvalue[j].first);
-        double zscorel_UP   = -TMath::NormQuantile(1.0 - (vqvalue[j].first + vqvalue[j].second));
-        double zscorel_DOWN = -TMath::NormQuantile(1.0 - (vqvalue[j].first - vqvalue[j].second));
+        double zscorel      = -MyQuantile( vqvalue[j].first );
+        double zscorel_UP   = -MyQuantile( vqvalue[j].first + vqvalue[j].second );
+        double zscorel_DOWN = -MyQuantile( vqvalue[j].first - vqvalue[j].second );
         double zscorel_ERR = 0.5*(zscorel_UP - zscorel_DOWN);
         cout << "zscorel: " << zscorel << " " << zscorel_UP << " " << zscorel_DOWN << " " << zscorel_ERR << endl; 
         
-        double zscorem1  =  TMath::NormQuantile(1.0 - ( vpvalue[j].first -0.5*vpequal[j].first ) ); 
-        double zscorem2  =  -TMath::NormQuantile(1.0 - ( vqvalue[j].first -0.5*vpequal[j].first ) );                      
+        double zscorem1  =  MyQuantile(  vpvalue[j].first -0.5*vpequal[j].first  ); 
+        double zscorem2  = -MyQuantile(  vqvalue[j].first -0.5*vpequal[j].first  );                      
                 
         cout << "Z-scores " << zscoreu << " +- " << zscoreu_ERR << " " << zscorel << " +- " << zscorel_ERR << " " << 0.5*(zscoreu + zscorel) << " " << zscorem1 << " " << zscorem2 << endl;
         
