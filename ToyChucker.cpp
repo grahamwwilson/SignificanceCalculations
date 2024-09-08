@@ -45,8 +45,8 @@ double MyQuantile(double p){
 std::tuple<int, double, int, double, double, double, double, double, double, double, double, double> 
    ToyChucker(int NFACTOR, int NOBSMIN, int NOBSMAX, double MUB, double FRACERROR, unsigned long int seed, int id ){
 
-   int THOUSAND = 1000;
-   int NGENERATED = 1*THOUSAND;   // Set so that pvalue MC fractional uncertainty is better than 2.5% (ie 1600 successes) for even the worst bins.
+   unsigned int THOUSAND = 1000;
+   unsigned int NGENERATED = 1*THOUSAND;   // Set so that pvalue MC fractional uncertainty is better than 2.5% (ie 1600 successes) for even the worst bins.
    
    NGENERATED = NFACTOR*THOUSAND;
    
@@ -57,7 +57,8 @@ std::tuple<int, double, int, double, double, double, double, double, double, dou
    cout << "NOBSMAX = "      << NOBSMAX << endl;   
    cout << "FRACERROR = " << FRACERROR << endl;
    double SIGMAB = FRACERROR*MUB;
-   cout << "SIGMAB " << SIGMAB << endl;   
+   cout << "SIGMAB " << SIGMAB << endl; 
+   cout << "NGENERATED " << NGENERATED << endl; 
    
 // Note depending on the actual p-value one may need a lot of toys, especially for very small p-values
 // Plan for at least 1600 events in the tails corresponding to 2.5% errors.  
@@ -66,20 +67,23 @@ std::tuple<int, double, int, double, double, double, double, double, double, dou
 
    TRandom3 *rg = new TRandom3(seed);
 
-   std::vector<int> vupper, vlower, vequal;
+   std::vector<unsigned int> vupper, vlower, vequal;
    for (int i=NOBSMIN; i<= NOBSMAX; i++){
        vupper.push_back(0);
        vlower.push_back(0);
        vequal.push_back(0);
    }
    
-   std::vector<int> vgen;
+//   std::vector<int> vgen;
+
+// DO WE NEED extra long ints??
    
-   int nlow = 0;
-   int nhigh = 0;
+   unsigned int nlow = 0;
+   unsigned int nhigh = 0;
+   unsigned int nequal = 0;
 
 // Simulate a Poisson distribution with the underlying mean being a Gaussianly distributed random number.
-   for (int i=0; i<NGENERATED; i++){
+   for (unsigned int i=0; i<NGENERATED; i++){
         double mu = MUB;
         if(FRACERROR > 1.0e-4){
             mu = rg->Gaus(MUB, SIGMAB);  // Choose Poisson mean, mu, from Gaussian with mean and rms of MUB and SIGMAB
@@ -91,9 +95,11 @@ std::tuple<int, double, int, double, double, double, double, double, double, dou
              if(n <= NOBS)vlower[j] +=1;       // Count toys with n less than or equalt to the observed counts
              if(n==NOBS)vequal[j] +=1;
              if(n<NOBSMIN)nlow++;
+             if(n==NOBS)nequal++;
              if(n>NOBSMAX)nhigh++;
+             
         }
-        vgen.push_back(n);
+//        vgen.push_back(n);
         if(i<NTOSAVE){
 // Save toy values for later synthetic data-sets for this bin
             std::tuple<int, unsigned long int, int, int> t = std::make_tuple(i, seed, id, n);
@@ -101,7 +107,7 @@ std::tuple<int, double, int, double, double, double, double, double, double, dou
         }
    }
    
-   cout << "nlow = " << nlow << "  nhigh " << nhigh << endl; 
+   cout << "nlow = " << nlow << " nequal= " << nequal << " nhigh= " << nhigh << endl; 
    
 // Create summary statistics post-generation
    std::vector<std::pair<double,double>> vpvalue, vqvalue, vpequal;
@@ -127,9 +133,25 @@ std::tuple<int, double, int, double, double, double, double, double, double, dou
         
         cout << " " << endl;
         cout << "NOBS " << NOBS << endl;
-        cout << "Upper-tail " << fixed << setprecision(10) << vpvalue[j].first << " +- " << fixed << setprecision(10) << vpvalue[j].second << endl;
-        cout << "Lower-tail " << fixed << setprecision(10) << vqvalue[j].first << " +- " << fixed << setprecision(10) << vqvalue[j].second << endl;
-        cout << "Equal      " << fixed << setprecision(10) << vpequal[j].first << " +- " << fixed << setprecision(10) << vpequal[j].second << endl; 
+        cout << "Upper-tailP " << fixed << setprecision(12) << vpvalue[j].first << " +- " << fixed << setprecision(12) << vpvalue[j].second << endl;
+        cout << "Lower-tailQ " << fixed << setprecision(12) << vqvalue[j].first << " +- " << fixed << setprecision(12) << vqvalue[j].second << endl;
+        cout << "Equal       " << fixed << setprecision(12) << vpequal[j].first << " +- " << fixed << setprecision(12) << vpequal[j].second << endl;
+        
+        double pmvalue = vpvalue[j].first -0.5*vpequal[j].first;
+        double dpm=sqrt(pmvalue*(1.0-pmvalue)/double(NGENERATED));  // binomial error
+        double pnvalue = vqvalue[j].first -0.5*vpequal[j].first;
+        double dpn=sqrt(pnvalue*(1.0-pnvalue)/double(NGENERATED));  // binomial error
+        
+        double p2 = pequal;
+        double p3 = pvalue - pequal;
+        double varps = (p3*(1.0-p3) + 0.25*p2*(1.0-p2) - p2*p3)/double(NGENERATED);  // multinomial error
+        double dps = sqrt(varps);
+
+        cout << "Upper-tailS " << fixed << setprecision(12) << pmvalue << " +- " << fixed << setprecision(12) << dps << " ( " << fixed << setprecision(12) << dpm << " ) " << endl;
+        cout << "Lower-tailS " << fixed << setprecision(12) << pnvalue << " +- " << fixed << setprecision(12) << dps << " ( " << fixed << setprecision(12) << dpn << " ) " << endl;
+// Also do the lower tail complement?
+        cout << "Lower-tailC " << fixed << setprecision(12) << 1.0 - vqvalue[j].first << " +- " << fixed << setprecision(12) << vqvalue[j].second << endl;       
+                               
         
 // Rather than apply the validity conditions of the estimators, let's first calculate them all 
 // and defer figuring out the former.
@@ -146,19 +168,23 @@ std::tuple<int, double, int, double, double, double, double, double, double, dou
         cout << "zscorel: " << zscorel << " " << zscorel_UP << " " << zscorel_DOWN << " " << zscorel_ERR << endl; 
         
         double zscorem1  =  MyQuantile(  vpvalue[j].first -0.5*vpequal[j].first  ); 
-        double zscorem2  = -MyQuantile(  vqvalue[j].first -0.5*vpequal[j].first  );                      
+        double zscorem2  = -MyQuantile(  vqvalue[j].first -0.5*vpequal[j].first  ); 
+        
+        double zscorem_UP = MyQuantile(  vpvalue[j].first -0.5*vpequal[j].first - dps );
+        double zscorem_DOWN = MyQuantile(  vpvalue[j].first -0.5*vpequal[j].first + dps ); 
+        double zscorem_ERR = 0.5*(zscorem_UP - zscorem_DOWN);                        
                 
         cout << "Z-scores " << zscoreu << " +- " << zscoreu_ERR << " " << zscorel << " +- " << zscorel_ERR << " " << 0.5*(zscoreu + zscorel) << " " << zscorem1 << " " << zscorem2 << endl;
         
-        std::tuple<int, double, int, double, double, double, double, double, double, double, double, double> t = std::make_tuple(NOBS, MUB, NGENERATED, 
-                                     vpvalue[j].first, vqvalue[j].first, vpequal[j].first, zscoreu, zscoreu_ERR, zscorel, zscorel_ERR, zscorem1, 0.5*(zscorel_ERR + zscoreu_ERR));
+        std::tuple<int, double, unsigned int, double, double, double, double, double, double, double, double, double> t = std::make_tuple(NOBS, MUB, NGENERATED, 
+                                     vpvalue[j].first, vqvalue[j].first, vpequal[j].first, zscoreu, zscoreu_ERR, zscorel, zscorel_ERR, zscorem1,  zscorem_ERR );
         vtup.push_back(t);
      
    }      
 
 // Apply the various algorithms and fill histograms with the choices.
    
-   std::tuple<int, double, int, double, double, double, double, double, double, double, double, double> t;
+   std::tuple<int, double, unsigned int, double, double, double, double, double, double, double, double, double> t;
    
    for (auto & el : vtup){
         t = el;

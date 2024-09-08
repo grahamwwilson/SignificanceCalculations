@@ -23,6 +23,13 @@ void ParseZScore(){
     ofstream fout("ZScores-B135.dat");
     ofstream bout("ZScores-B135-mub.dat");     // For background quantile definition.
     
+    TFile *f = new TFile("DataAnalyzer.root","RECREATE");
+
+    TH1D* nhistz1 = new TH1D("nhistz1","1st Quartile of #mu_{b}; Z-Score; Bins per 0.25",32,-4.0,4.0);  
+    TH1D* nhistz2 = new TH1D("nhistz2","2nd Quartile of #mu_{b}; Z-Score; Bins per 0.25",32,-4.0,4.0); 
+    TH1D* nhistz3 = new TH1D("nhistz3","3rd Quartile of #mu_{b}; Z-Score; Bins per 0.25",32,-4.0,4.0); 
+    TH1D* nhistz4 = new TH1D("nhistz4","4th Quartile of #mu_{b}; Z-Score; Bins per 0.25",32,-4.0,4.0);               
+    
     int f0;     // rank
     int f1;     // id
     string f2;  // regionName
@@ -82,10 +89,25 @@ void ParseZScore(){
                           endl;
         fout << fixed << setprecision(5) << setw(10) << float(zscore) << endl;
         bout << fixed << setprecision(10) << setw(15) << postfitMean << endl;
+        if(postfitMean < 10.46){
+            nhistz1->Fill(zscore);
+        }
+        else if(postfitMean < 32.95){
+            nhistz2->Fill(zscore);        
+        } 
+        else if(postfitMean < 133.0){
+            nhistz3->Fill(zscore);        
+        }
+        else{
+            nhistz4->Fill(zscore);         
+        }         
     }      
     cout << "Saturated chi-squared total " << satChisqTot << endl;
     fout.close();
     bout.close();
+    
+    f->Write();
+    f->Close();     
 
 }
 

@@ -26,6 +26,13 @@ std::vector<std::tuple<int, unsigned long int, int, int>> vtoys;  // Design with
 std::vector<AnalysisBin> vAnaBins;
 std::vector<statAnalysisBin> vstatAnaBins;
 
+bool sort_by_abszscore( const statAnalysisBin & lhs, const statAnalysisBin & rhs )
+{
+   
+   return abs(lhs.zscore) > abs(rhs.zscore);
+}
+
+
 void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int baseseed, std::string infile){
 
     // cout << "Hello from Parser " << endl;
@@ -101,7 +108,7 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
                  satChisq = 2.0*(y - n + n*log(n/y) );
              }
              
-             aBin = {f1, f2, nobs,int(f3+0.01),f9,f10,satChisq};
+             aBin = {f1, f2, nobs, int(f3+0.01), f9, f10, satChisq};
              vAnaBins.push_back(aBin);       
              
         }
@@ -207,7 +214,7 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
              cout << "Defaulting to " << NTOUSE << " thousand toys for pathological bins " << endl;
 
              if(PoissonOnly)fracError=1.0e-6;
-             std::tuple<int, double, int, double, double, double, double, double, double, double, double, double> t = 
+             std::tuple<int, double, unsigned int, double, double, double, double, double, double, double, double, double> t = 
                        ToyChucker(NTOUSE, ndata, ndata, postfitMean, fracError, seed, id );             
              
          }
@@ -215,7 +222,7 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
           
              if(PoissonOnly)fracError=1.0e-6;
           
-             std::tuple<int, double, int, double, double, double, double, double, double, double, double, double> t = 
+             std::tuple<int, double, unsigned int, double, double, double, double, double, double, double, double, double> t = 
                        ToyChucker(ntouse, ndata, ndata, postfitMean, fracError, seed, id );
          
              cout << "New z-score for bin " << nbin << " " << id << " " << std::get<10>(t)  << " +- " << std::get<11>(t) << endl; 
@@ -276,14 +283,14 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
 // And now sort again and print.
 
 // Sort vector using |zscore| (see struct implementation). Hopefully this works for the inherited one ...
-    std::sort(vstatAnaBins.begin(), vstatAnaBins.end()  );
-    
+    std::sort(vstatAnaBins.begin(), vstatAnaBins.end()  ); 
+    std::sort(vstatAnaBins.begin(), vstatAnaBins.end(), sort_by_abszscore );    
     
     cout << "   Rank      ID                                           regionName   sbin    ndata       bMean        bErr       satChisq   satChisqTotal   zscore   zscoreError" << endl; 
     nbin = 0;
     satChisqTot = 0.0;
     for (auto & el : vstatAnaBins){
-         nbin +=1;
+         nbin += 1;
          auto id = el.id;
          auto regionName = el.regionName;
          auto ndata = el.ndata;
@@ -294,13 +301,12 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
          auto zscore = el.zscore;
          auto zscoreError = el.zscoreError;
  
-        satChisqTot += satChisq;
-        cout << setw(7) << nbin << " " << setw(7) << id << setw(53) << regionName << setw(7) << subBin 
-                          << setw(9) << ndata << setw(12) << fixed << setprecision(4) << postfitMean << setw(12) <<fixed << setprecision(4) 
-                          << postfitError << "   " << fixed << setprecision(5) << setw(12) << satChisq << "  " 
-                          << fixed << setprecision(5) << setw(14) << satChisqTot  
-                          << fixed << setprecision(5) << setw(10) << zscore << fixed << setprecision(5) << setw(10) << zscoreError <<
-                          endl; 
+         satChisqTot += satChisq;
+         cout << setw(7) << nbin << " " << setw(7) << id << setw(53) << regionName << setw(7) << subBin 
+                         << setw(9) << ndata << setw(12) << fixed << setprecision(4) << postfitMean << setw(12) << fixed << setprecision(4) 
+                         << postfitError << "   " << fixed << setprecision(5) << setw(12) << satChisq << "  " 
+                         << fixed << setprecision(5) << setw(14) << satChisqTot  
+                         << fixed << setprecision(5) << setw(10) << zscore << fixed << setprecision(5) << setw(10) << zscoreError << endl; 
     }                                     
         
     f->Write();
@@ -327,8 +333,8 @@ int main(int argc, char** argv){
     std::string infilename = "B135_7-7-24_all_Modified_V1.txt";
     app.add_option("-i,--infilename", infilename, "Input file from fit to parse");  
     
-//    unsigned long int baseseed = 123456L;
-    unsigned long int baseseed = 125900L;    
+    unsigned long int baseseed = 123456L;
+//    unsigned long int baseseed = 125900L;    
     app.add_option("-b,--baseseed", baseseed, "Base seed for toys");    
               
     CLI11_PARSE(app, argc, argv);
