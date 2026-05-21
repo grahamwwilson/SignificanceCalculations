@@ -37,8 +37,47 @@ double pBi(double ns, double mub, double syst){
                                        << " syst = " << syst << endl;
 
    double p_Bi = TMath::BetaIncomplete(1.0/(1.0+tau), non, noff+1.0);
-
    return p_Bi;
+
+}
+
+double zBi(double ns, double mub, double syst){
+// Based on 
+// @article{Cousins:2008zz,
+//    author = "Cousins, Robert D. and Linnemann, James T. and Tucker, Jordan",
+//    title = "{Evaluation of three methods for calculating 
+// statistical significance when incorporating a systematic uncertainty 
+// into a test of the background-only hypothesis for a Poisson process}",
+//    eprint = "physics/0702156",
+//    archivePrefix = "arXiv",
+//    doi = "10.1016/j.nima.2008.07.086",
+//    journal = "Nucl. Instrum. Meth. A",
+//    volume = "595",
+//    number = "2",
+//    pages = "480--501",
+//    year = "2008"
+// }
+
+// ns  = Nsignal events
+// mub = Background mean
+// syst = Fractional systematic uncertainty on background mean
+//
+// See Appendix E for essentially this implementation
+//
+   double sb = syst*mub;
+   double tau = mub/(sb*sb);
+   double non  = mub + ns;
+   double noff = tau*mub;
+
+   cout << "Calculating pBi for ns = " << ns << " mub= " << mub << " syst = " << syst << endl;
+   cout << "Using auxiliary parameters tau, non, and noff of " << tau << " " << non << " " << noff << endl;
+
+   double pBi = TMath::BetaIncomplete(1.0/(1.0+tau), non, noff+1.0);
+// And transform to single-sided z score.
+   double zBi = sqrt(2.0)*TMath::ErfInverse(1.0 - 2.0*pBi);
+   cout << "Found pBi, zBi values of " << pBi << " " << zBi << endl;
+   return zBi;
+
 }
 
 double zSingleSided(double pvalue){
@@ -60,12 +99,14 @@ double pLyonsChapon(double p1, double p2){
 
 void Analyze(double pb1, double pb2){
 
+
+
 // Note this is single-sided
    double zb1 = zSingleSided(pb1);
    double zb2 = zSingleSided(pb2);
 
-   cout << " pb1 " << pb1 << " zb1 " << zb1 << endl;
-   cout << " pb2 " << pb2 << " zb2 " << zb2 << endl;
+   cout << "pb1 " << pb1 << " zb1 " << zb1 << endl;
+   cout << "pb2 " << pb2 << " zb2 " << zb2 << endl;
 
 // Now combine these two tests assuming corresponding chi-squared 
 // statistics with the same pvalue.
@@ -137,13 +178,13 @@ void Analyze(double pb1, double pb2){
    double zweighted = sqrt(zb1*zb1 + zb2*zb2);
 
    cout << " " << endl;
-   cout << " Combined z-value SUMMARY " << endl;
-   cout << " Chi-square            1: " << zcombined << endl;
-   cout << " Lyons-Chapon          2: " << zLC << endl;
-   cout << " Stouffer              3: " << zcomb << endl;
-   cout << " Alt. Chisq.           4: " << zvaluep << endl;
-   cout << " Fisher                5: " << zvaluef << endl;
-   cout << " Quadrature Weighted   6: " << zweighted << endl;
+   cout << "Combined z-value SUMMARY " << endl;
+   cout << "Chi-square            1: " << zcombined << endl;
+   cout << "Lyons-Chapon          2: " << zLC << endl;
+   cout << "Stouffer              3: " << zcomb << endl;
+   cout << "Alt. Chisq.           4: " << zvaluep << endl;
+   cout << "Fisher                5: " << zvaluef << endl;
+   cout << "Quadrature Weighted   6: " << zweighted << endl;
    cout << " " << endl;
    cout << " " << endl;
 
@@ -157,21 +198,28 @@ int main(){
 // as would happen with say a search with two bins / channels 
 // in the strict counting experiment sense. 
 // The combination assumes uncorrelated systematics.
+
+   double zval = zBi(56.667, 83.333, 0.1);
    
-   double pb1 = pBi(69.0, 169.2, 0.1);
-   double pb2 = pBi(10.4, 58.2, 0.1);
+   double pb1 = pBi(69.0, 169.2, 0.01);
+   double pb2 = pBi(10.4, 58.2, 0.01);
    Analyze(pb1, pb2);
 
-   pb1 = pBi(69.0, 169.2, 0.1);
-   pb2 = pBi(69.0, 169.2, 0.1);
+   pb1 = pBi(69.0, 169.2, 0.01);
+   pb2 = pBi(69.0, 169.2, 0.01);
    Analyze(pb1, pb2);
 
-   pb1 = pBi(44.74, 198.2, 0.1);
-   pb2 = pBi(32.1, 198.2, 0.1);
+   pb1 = pBi(44.74, 198.2, 0.01);
+   pb2 = pBi(32.1, 198.2, 0.01);
    Analyze(pb1, pb2);
 
-   pb1 = pBi(81.3079, 8930.91, 0.1);
-   pb2 = pBi(62.4938, 3048.57, 0.1);
+   pb1 = pBi(81.3079, 8930.91, 0.01);
+   pb2 = pBi(62.4938, 3048.57, 0.01);
+   Analyze(pb1, pb2);
+
+// Make a completely negligible one
+   pb1 = pBi(1.0, 8930.91, 0.01);
+   pb2 = pBi(1.0, 3048.57, 0.01);
    Analyze(pb1, pb2);
 
 }
