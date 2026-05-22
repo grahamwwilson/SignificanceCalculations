@@ -1,48 +1,41 @@
-// Calculate Z-score expectations for specific case
+// Calculate expected bias of the mean and variance of the Z-score estimate 
+// using the pure Poisson case with no background uncertainty treatment (or sigma_mubhat=0)
+//
+// So instead of running toys can simply do appropriate (taking care of numerical issues) summing 
+// over all of the discrete outcomes, where k ~ Po(mu).
+//
 #include "CLI11.hpp"
 #include <iostream> 
 #include <algorithm> //std::sort
 #include <cmath>
-#include <TRandom3.h>
 #include <TMath.h>   //TMath::Prob
-#include <TH1D.h>
-#include <TFile.h>
 #include <vector>
 #include <fstream>   
 #include <cstdlib>
 #include <string>
 #include <iomanip>
-
-double MyQuantile(double p){
-
-// Protect against out of range problems with NormQuantile
-// Double precision EPS
-
-    double q = 1.0 - p;
-    double value {};
-    
-    if( q<=0 ){
-        std::cout << "Error for MyQuantile with argument " << q << " Setting value of -19.999 " << std::endl;
-        value = -19.999;
-    }
-    else if (q >=1){
-        std::cout << "Error for MyQuantile with argument " << q << " Setting value of 19.999 " << std::endl;
-        value =  19.999;    
-    }
-    else{
-        value = TMath::NormQuantile(q);
-    }
-    return value;
-}
+#include "MyQuantile.h"
 
 std::pair<double,double> Compute(double mu,int kmin, int kmax){
+
+// Input quantities
+// mu:   Chosen Poisson mean
+// kmin: Minimum k
+// kmax: Maximum k
+//
+// For non-negative integers k, satisfying kmin <= k <= kmax, 
+// evaluate the Poisson probability pk = Poisson(k; mu)
+// and compute the mean value and standard deviation for the symmetric Z-score variable 
+// through summation
 
    std::cout << "mu " << mu << " kmin " << kmin << " kmax " << kmax << std::endl;
    
    double emu  = TMath::Exp(-mu);
    double bess = TMath::BesselI(0,2.0*mu);
    
+// Historical debugging check? not used in current calculation.
    std::cout << "I0 (2 mu) " << bess << std::endl;
+// Apparently Sum(k=0, infty) pk**2 = Exp(-2 mu)*I0(2mu).
    
    std::vector <std::pair<int,double>> vp;
    std::vector <std::pair<int,double>> vQ;
@@ -111,10 +104,14 @@ std::pair<double,double> Compute(double mu,int kmin, int kmax){
        double zP = MyQuantile(psP);
        
        double z;
+
+// Choose representation with better numerical precision
        if(psQ > 0.5){
+// cumulative subtraction for large probabilities
           z = zQ;
        }
        else{
+// explicit tail summation for small probabilities
           z = zP;
        }
        
@@ -160,6 +157,20 @@ std::pair<double,double> Compute(double mu,int kmin, int kmax){
 
 int main(int argc, char** argv){
 
+// For pure Poisson-only case for a given Poisson-mean, mu, 
+// we evaluate the mean and standard deviation that results from using the symmetrized Z-score. 
+// This is "Poisson-only" equivalent to setting sigma_mub_hat = 0.
+
+// So all we need to do is 
+// 1. loop over all possible observed values k
+// 2.    for each k, compute Z_k
+// 3.    weight the Z_k value by the corresponding Poisson probability, Po(k; mu)
+// 4. Sum over all k.
+
+// We need to be careful about various numerical gotchas given the in principle need to 
+// do infinite sums. So instead of summing from k=0, k=infinity, we sum from k=kmin, k=kmax.
+// For small values of mu we of course can start at k=0.
+ 
     CLI::App app{"Compute Z-score expected values, Version 6"};
     
     double mumin=1.0;
@@ -169,9 +180,9 @@ int main(int argc, char** argv){
     int kmax=40;
     std::string part = "P1";
     
-    app.add_option("--mumin", mumin, "Poisson mean minimum");
-    app.add_option("--mumax", mumax, "Poisson mean maximum"); 
-    app.add_option("-d,--dmu",dmu, "Poisson mean increment");
+    app.add_option("--mumin", mumin, "Poisson mean minimum in scan");
+    app.add_option("--mumax", mumax, "Poisson mean maximum in scan"); 
+    app.add_option("-d,--dmu",dmu, "Poisson mean increment in scan");
     app.add_option("-f,--kmin", kmin, "Minimum count, kmin");      
     app.add_option("-l,--kmax", kmax, "Maximum count, kmax");   
     app.add_option("-p,--part", part, "Part string for file name"); 
@@ -196,6 +207,7 @@ int main(int argc, char** argv){
         auto result = Compute(mu,kmin,kmax);
         foutmean << mu << " " << result.first << " " << result.second << std::endl;
         foutsd   << mu << " " << result.second << " " << result.first << std::endl;                
+        std::cout << " " << std::endl;
     }
        
     foutmean.close();
