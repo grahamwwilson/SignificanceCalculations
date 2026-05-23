@@ -1,29 +1,3 @@
-int nQuantileCalls = 0;
-
-double MyQuantile(double p){
-
-// Protect against out of range problems with NormQuantile
-
-    nQuantileCalls +=1;
-    cout << "MyQuantile call " << nQuantileCalls << endl;
-
-    double q = 1.0 - p;
-    double value {};
-    
-    if( q<=0 ){
-        cout << "Error for MyQuantile with argument " << q << " Setting value of -19.999 " << endl;
-        value = -19.999;
-    }
-    else if (q >=1){
-        cout << "Error for MyQuantile with argument " << q << " Setting value of 19.999 " << endl;
-        value =  19.999;    
-    }
-    else{
-        value = TMath::NormQuantile(q);
-    }
-    
-    return value;
-}
 //
 // Returned tuple has the form
 //
@@ -137,9 +111,9 @@ std::tuple<int, double, int, double, double, double, double, double, double, dou
         cout << "Lower-tailQ " << fixed << setprecision(12) << vqvalue[j].first << " +- " << fixed << setprecision(12) << vqvalue[j].second << endl;
         cout << "Equal       " << fixed << setprecision(12) << vpequal[j].first << " +- " << fixed << setprecision(12) << vpequal[j].second << endl;
         
-        double pmvalue = vpvalue[j].first -0.5*vpequal[j].first;
+        double pmvalue = vpvalue[j].first - 0.5*vpequal[j].first;   // pS
         double dpm=sqrt(pmvalue*(1.0-pmvalue)/double(NGENERATED));  // binomial error
-        double pnvalue = vqvalue[j].first -0.5*vpequal[j].first;
+        double pnvalue = vqvalue[j].first - 0.5*vpequal[j].first;   // qS
         double dpn=sqrt(pnvalue*(1.0-pnvalue)/double(NGENERATED));  // binomial error
         
         double p2 = pequal;
@@ -152,7 +126,6 @@ std::tuple<int, double, int, double, double, double, double, double, double, dou
 // Also do the lower tail complement?
         cout << "Lower-tailC " << fixed << setprecision(12) << 1.0 - vqvalue[j].first << " +- " << fixed << setprecision(12) << vqvalue[j].second << endl;       
                                
-        
 // Rather than apply the validity conditions of the estimators, let's first calculate them all 
 // and defer figuring out the former.
         double zscoreu      =  MyQuantile( vpvalue[j].first );
@@ -201,70 +174,42 @@ std::tuple<int, double, int, double, double, double, double, double, double, dou
         auto zscorem_ERR = std::get<11>(el);
         int ibin = NOBS - NOBSMIN + 1;
         double z1,z2,z3,z4;
+
         double z0 = zscoreu;
         
-/*        hist0->Fill(NOBS,zscoreu);
-        hist0->SetBinError(ibin, zscoreu_ERR); 
-        hist0N->Fill(NOBS,zscorel);
-        hist0N->SetBinError(ibin, zscorel_ERR);
-        hist0M->Fill(NOBS,0.5*(zscorel + zscoreu));
-        hist0M->SetBinError(ibin, 0.5*(zscorel_ERR + zscoreu_ERR));
-        hist0MH->Fill(NOBS,zscorem);
-        hist0MH->SetBinError(ibin, zscorem_ERR);             */
-        
-// Algorithm 1
+// Algorithm 1. The historical "peaky" early version that switches based on data.
         if(NOBS >= MUB){
             z1 = zscoreu;
-//            hist1->Fill(NOBS,zscoreu);
-//            hist1->SetBinError(ibin, zscoreu_ERR);
         }
         else{
             z1 = zscorel;
-//            hist1->Fill(NOBS,zscorel);
-//            hist1->SetBinError(ibin, zscorel_ERR);
         }
 // Algorithm 2
         if(p <= q){
             z2 = zscoreu;
-//            hist2->Fill(NOBS,zscoreu);
-//            hist2->SetBinError(ibin, zscoreu_ERR);            
         }
         else{
             z2 = zscorel;
-//            hist2->Fill(NOBS,zscorel);
-//            hist2->SetBinError(ibin, zscorel_ERR); 
         }
 // Algorithm 3/4
         if(p <= q){     // Upper-tail probability is smallest
              if(p<0.5){
                  z3 = zscoreu;
-//                 z4 = zscoreu;
-//                 hist3->Fill(NOBS, zscoreu);
-//                 hist3->SetBinError(ibin, zscoreu_ERR);
-//                 hist4->Fill(NOBS, zscoreu);
-//                 hist4->SetBinError(ibin, zscoreu_ERR);                   
              }
              else{       // Both p and q are > 0.5
                  z3 = 0.5*(zscoreu+zscorel);
-//                 hist3->Fill(NOBS,0.5*(zscoreu + zscorel));
-//                 hist3->SetBinError(ibin, 0.5*(zscorel_ERR + zscoreu_ERR)); 
              }
         }
         else{
              if(q<0.5){
                  z3 = zscorel;
-//                 hist3->Fill(NOBS,zscorel);
-//                 hist3->SetBinError(ibin, zscorel_ERR);                  
              }
              else{
                  z3 = 0.5*(zscoreu + zscorel);
-//                 hist3->Fill(NOBS,0.5*(zscoreu + zscorel));
-//                 hist3->SetBinError(ibin, 0.5*(zscorel_ERR + zscoreu_ERR));                  
              }               
         }
-        cout << "NOBS = " << NOBS << " Alg 0,1,2,3 z-scores " << z0 << " " << z1 << " " << z2 << " " << z3 << endl;              
+// Comment this out as it just seems to be confusing things.
+//        cout << "NOBS = " << NOBS << " Alg 0,1,2,3 z-scores " << z0 << " " << z1 << " " << z2 << " " << z3 << endl;              
    }
    return t;
 }
-
-

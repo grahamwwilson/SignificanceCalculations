@@ -16,6 +16,8 @@
 #include <string>
 #include "AnalysisBin.h"
 #include "statAnalysisBin.h"
+#include "MyQuantile.h"
+#include "ComputeZscoreLocationAndScaleCorrection.h"
 using namespace std;
 
 int NTOSAVE {};
@@ -28,37 +30,40 @@ std::vector<statAnalysisBin> vstatAnaBins;
 
 bool sort_by_abszscore( const statAnalysisBin & lhs, const statAnalysisBin & rhs )
 {
-   
-   return abs(lhs.zscore) > abs(rhs.zscore);
+   return abs(lhs.zscore) > abs(rhs.zscore);  // From most to least deviating
+ //  return abs(lhs.zscore) < abs(rhs.zscore);    // From least to most deviating
 }
 
 
-void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int baseseed, std::string infile){
+void Parser(int nfactor, bool PoissonOnly, int ndivide, bool lcorr, unsigned long int baseseed, std::string infile){
 
     // cout << "Hello from Parser " << endl;
     
     TFile *f = new TFile("Analysis.root","RECREATE");
-    TH1D* hist = new TH1D("hist","Data; Z-Score (Algorithm 1); Bins per 0.25",49,-6.125,6.125);    
-    TH1D* histz = new TH1D("histz","Data; Z-Score (Algorithm 0MH); Bins per 0.25",49,-6.125,6.125); 
-    TH1D* histzu = new TH1D("histzu","Data; Z-Score (Algorithm 0P); Bins per 0.25",49,-6.125,6.125); 
-    TH1D* histzl = new TH1D("histzl","Data; Z-Score (Algorithm 0N); Bins per 0.25",49,-6.125,6.125);
+
+// For data inspection it is important that the range of the histogram is wide enough to see far tails  
+    TH1D* histz  = new TH1D("histz","Data; Z-Score (Algorithm 0MH); Bins per 0.25",48,-6.0,6.0); 
+    TH1D* histzFinal  = new TH1D("histzFinal","Data; Z-Score (Latest Algorithm); Bins per 0.25",48,-6.0,6.0);
+    TH1D* histzu = new TH1D("histzu","Data; Z-Score (Algorithm 0P); Bins per 0.25",48,-6.0,6.0); 
+    TH1D* histzl = new TH1D("histzl","Data; Z-Score (Algorithm 0N); Bins per 0.25",48,-6.0,6.0);
+    TH1D* histzo = new TH1D("histzo","Data; Z-Score (Old Algorithm); Bins per 0.25",48,-6.0,6.0); 
+
+    TH1D* histzdu = new TH1D("histzdu","Data; Upper Z-Score (no symmetrization); Bins per 0.10",40,2.0,6.0);
+    TH1D* histzdl = new TH1D("histzdl","Data; Lower Z-Score (no symmetrization); Bins per 0.10",40,-6.0,-2.0);
+
+// Summary plots with paper binning   
+    TH1D* mhistz  = new TH1D("mhistz","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);
+    TH1D* mhistzFinal  = new TH1D("mhistzFinal","Data; Z-Score (Latest Algorithm); Bins per 0.25",32,-4.0,4.0);
+    TH1D* mhistzo = new TH1D("mhistzo","Data; Z-Score (Old Algorithm); Bins per 0.25",32,-4.0,4.0); 
     
-    TH1D* hist_censored = new TH1D("hist_censored","Data; Z-Score (Algorithm 1); Bins per 0.25",49,-6.125,6.125);    
-    TH1D* histz_censored = new TH1D("histz_censored","Data; Z-Score (Algorithm 0MH); Bins per 0.25",49,-6.125,6.125); 
-    
-    TH1D* nhist = new TH1D("nhist","Data; Z-Score (Algorithm 1); Bins per 0.25",31,-3.875,3.875);    
-    TH1D* nhistz = new TH1D("nhistz","Data; Z-Score (Algorithm 0MH); Bins per 0.25",31,-3.875,3.875);
-    
-    TH1D* mhist = new TH1D("mhist","Data; Z-Score (Algorithm 1); Bins per 0.25",32,-4.0,4.0);    
-    TH1D* mhistz = new TH1D("mhistz","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
-    
+// Region specific bins with paper binning
     TH1D* mhistz0L = new TH1D("mhistz0L","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
     TH1D* mhistz1L = new TH1D("mhistz1L","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
     TH1D* mhistz2L = new TH1D("mhistz2L","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
     TH1D* mhistz3L = new TH1D("mhistz3L","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
     TH1D* mhistzSV = new TH1D("mhistzSV","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);    
     TH1D* mhistzBronze = new TH1D("mhistzBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);
-    TH1D* mhistznonBronze = new TH1D("mhistznonBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
+    TH1D* mhistznonBronze   = new TH1D("mhistznonBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
     TH1D* mhistz1LnonBronze = new TH1D("mhistz1LnonBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
     TH1D* mhistz2LnonBronze = new TH1D("mhistz2LnonBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0); 
     TH1D* mhistz3LnonBronze = new TH1D("mhistz3LnonBronze","Data; Z-Score (Algorithm 0MH); Bins per 0.25",32,-4.0,4.0);
@@ -198,14 +203,14 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
                 zscoreError = -1.0;         
              }
              // Fill these defaults for the two atrocious bins
-             histz->Fill(znew); 
-             hist->Fill(zold);
-             nhistz->Fill(znew); 
-             nhist->Fill(zold); 
-             mhistz->Fill(znew); 
-             mhist->Fill(zold);                          
+             histzo->Fill(zold);
+             histz->Fill(znew);
              histzl->Fill(zlower);
-             histzu->Fill(zupper);              
+             histzu->Fill(zupper); 
+
+             mhistzo->Fill(zold); 
+             mhistz->Fill(znew); 
+           
              // Even in this case we want to throw some toys (at least NTOSAVE) but not save the z-scores.
 
              int ntogen = NTOSAVE;
@@ -225,54 +230,111 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, unsigned long int basese
              std::tuple<int, double, unsigned int, double, double, double, double, double, double, double, double, double> t = 
                        ToyChucker(ntouse, ndata, ndata, postfitMean, fracError, seed, id );
          
-             cout << "New z-score for bin " << nbin << " " << id << " " << std::get<10>(t)  << " +- " << std::get<11>(t) << endl; 
+             cout << "New raw z-score for bin " << nbin << " " << id << " " << std::get<10>(t)  << " +- " << std::get<11>(t) << endl; 
+
+             double zbias = 0.0;
+             double zscaleSD = 1.0;
+             auto result = std::make_pair(zbias, zscaleSD);
+
+             if(lcorr){
+// Compute zscore bias and scale corrections. These DO NOT DEPEND on random numbers.
+                 result = ComputeZscoreLocationAndScaleCorrection( postfitMean );
+                 zbias = result.first;
+                 zscaleSD = result.second;
+             }
          
              znew = std::get<10>(t);
              zscoreError = std::get<11>(t);
              zupper = std::get<6>(t);
              zlower = std::get<8>(t);
-             zold;
              zold = zupper;
              if(ndata < postfitMean)zold = zlower;
-             histz->Fill(znew); 
-             hist->Fill(zold);
-             nhistz->Fill(znew); 
-             nhist->Fill(zold);  
-             mhistz->Fill(znew); 
-             mhist->Fill(zold);                          
+
+// Standardization corrections for znew
+             double znewCorr = (znew - zbias)/zscaleSD;
+// Also scale zscoreError too.
+             double zscoreErrorCorr = zscoreError/zscaleSD;
+             if(lcorr){
+                 std::cout << "Corrected z-score for bin " << nbin << " " << id << " " 
+                           << znewCorr  << " +- " << zscoreErrorCorr << " (corrs = " << zbias << " " << zscaleSD << ")" << std::endl; 
+             }
+// As a sanity check also print more standard statistics too
+             double zPull = ComputeNaivePull( ndata, postfitMean );
+             std::cout << "Naive standardized pull (nObs - mu)/sqrt(mu) = " << zPull << std::endl;
+             if ( postfitMean < 300.0 ){
+                 auto poissResult = ComputePoissonOnlyStats( ndata, postfitMean );
+                 std::cout << "Poisson-only standard p-value " << poissResult.first 
+                           << " and corresponding Z-score " << poissResult.second << std::endl; 
+             }
+
+// Current choice.
+// 1. |znew| < 1.0        Apply corrections for both bias and scale
+// 2. 1.0 < |znew| < 2.0  Apply only bias correction
+// 3. \znew| > 2.0.       Use conservative choice of either zscoreu or zscorel with no bias corrections
+
+             double znewValue = znew;
+ 
+             if(std::abs(znewValue) < 1.0){
+                 znew = znewCorr;
+                 zscoreError = zscoreErrorCorr;
+             }
+             else if(std::abs(znewValue) < 2.0){
+                 znew = znew - zbias;
+             }
+             else if(znewValue >= 2.0){
+// switch to zupper and its error
+                 znew = zupper;
+                 zscoreError = std::get<7>(t);
+             }
+             else if(znewValue <= -2.0){
+// switch to zlower and its error
+                 znew = zlower;
+                 zscoreError = std::get<9>(t);
+             }
+
+             std::cout << "Assigned Z-value of " << znew << " +- " << zscoreError << std::endl;
+ 
+             histzo->Fill(zold);
+             histz->Fill(znewValue); 
              histzl->Fill(zlower);
              histzu->Fill(zupper);
-             histz_censored->Fill(znew); 
-             hist_censored->Fill(zold);
+             histzFinal->Fill(znew);
+
+             histzdu->Fill(zupper);
+             histzdl->Fill(zlower);
+
+             mhistzo->Fill(zold);
+             mhistz->Fill(znewValue);
+             mhistzFinal->Fill(znew);
              
              bool SR=false;
              
-             if(el.is0L())mhistz0L->Fill(znew);
-             if(el.is1L())mhistz1L->Fill(znew);
-             if(el.is2L())mhistz2L->Fill(znew);
-             if(el.is3L())mhistz3L->Fill(znew);
-             if(el.isSV())mhistzSV->Fill(znew);             
+             if(el.is0L())mhistz0L->Fill(znewValue);
+             if(el.is1L())mhistz1L->Fill(znewValue);
+             if(el.is2L())mhistz2L->Fill(znewValue);
+             if(el.is3L())mhistz3L->Fill(znewValue);
+             if(el.isSV())mhistzSV->Fill(znewValue);             
              if(el.isBronze()){
-                 mhistzBronze->Fill(znew);
+                 mhistzBronze->Fill(znewValue);
              }
              else{
-                 mhistznonBronze->Fill(znew);
-                 if(el.is1L())mhistz1LnonBronze->Fill(znew);
-                 if(el.is2L())mhistz2LnonBronze->Fill(znew);
-                 if(el.is3L())mhistz3LnonBronze->Fill(znew);
+                 mhistznonBronze->Fill(znewValue);
+                 if(el.is1L())mhistz1LnonBronze->Fill(znewValue);
+                 if(el.is2L())mhistz2LnonBronze->Fill(znewValue);
+                 if(el.is3L())mhistz3LnonBronze->Fill(znewValue);
                  if( (el.is0L() && subBin > 3) || (el.is1L() && subBin > 2) || (el.is2L() && subBin >4) || el.is3L() ){
                       SR = true;
-                      mhistzSRD1->Fill(znew);
+                      mhistzSRD1->Fill(znewValue);
                  }  
                  if(subBin > 2){
-                     mhistzSRD0->Fill(znew);
-                     if(el.is0L())mhistz0LSR->Fill(znew);                     
-                     if(el.is1L())mhistz1LSR->Fill(znew);
-                     if(el.is2L())mhistz2LSR->Fill(znew);
-                     if(el.is3L())mhistz3LSR->Fill(znew);                     
+                     mhistzSRD0->Fill(znewValue);
+                     if(el.is0L())mhistz0LSR->Fill(znewValue);                     
+                     if(el.is1L())mhistz1LSR->Fill(znewValue);
+                     if(el.is2L())mhistz2LSR->Fill(znewValue);
+                     if(el.is3L())mhistz3LSR->Fill(znewValue);                     
                  }  
              }
-             if(!SR)mhistzNSRD1->Fill(znew);                           
+             if(!SR)mhistzNSRD1->Fill(znewValue);                           
          }
 
 // Push bin into new struct.
@@ -324,11 +386,14 @@ int main(int argc, char** argv){
     bool poissonOnly = false;
     app.add_option("-p,--poissonOnly", poissonOnly, "Boolean for Poisson Only");
     
-    int ntosave = 1000;
+    int ntosave = 100;
     app.add_option("-s,--ntosave", ntosave, "Number of toys to save"); 
     
     int ndivide = 1;
     app.add_option("-d,--ndivide", ndivide, "Divisor for quick test");
+
+    bool lcorr = true;
+    app.add_flag("--corrections,!--no-corrections",lcorr,"Enable/disable Zscore corrections");
     
     std::string infilename = "B135_7-7-24_all_Modified_V1.txt";
     app.add_option("-i,--infilename", infilename, "Input file from fit to parse");  
@@ -340,16 +405,17 @@ int main(int argc, char** argv){
     CLI11_PARSE(app, argc, argv);
     
     std::cout << "nfactor  " << nfactor << std::endl;    
-    std::cout << "poissonOnly " << poissonOnly << endl;
-    std::cout << "ntosave " << ntosave << endl;
-    std::cout << "ndivide " << ndivide << endl;
-    std::cout << "baseseed " << baseseed << endl;
-    std::cout << "infilename " << infilename << endl;   
+    std::cout << "poissonOnly " << poissonOnly << std::endl;
+    std::cout << "ntosave " << ntosave << std::endl;
+    std::cout << "ndivide " << ndivide << std::endl;
+    std::cout << "lcorr   " << lcorr << std::endl;
+    std::cout << "baseseed " << baseseed << std::endl;
+    std::cout << "infilename " << infilename << std::endl;   
     
 // Global value
     NTOSAVE = ntosave;
 
-    Parser(nfactor, poissonOnly, ndivide, baseseed, infilename);
+    Parser(nfactor, poissonOnly, ndivide, lcorr, baseseed, infilename);
     
 // Sort global toys vector
     std::sort(vtoys.begin(), vtoys.end());

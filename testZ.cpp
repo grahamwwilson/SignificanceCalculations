@@ -37,9 +37,10 @@ std::pair<double,double> Compute(double mu,int kmin, int kmax){
    std::cout << "I0 (2 mu) " << bess << std::endl;
 // Apparently Sum(k=0, infty) pk**2 = Exp(-2 mu)*I0(2mu).
    
-   std::vector <std::pair<int,double>> vp;
-   std::vector <std::pair<int,double>> vQ;
-   std::vector <std::pair<int,double>> vP;
+   std::vector <std::pair<int,double>> vp;  //vector of pairs with (k, pk) where p(k) = Prob(k; mu)
+   std::vector <std::pair<int,double>> vQ;  //vector of pairs with (k, ps) where ps = 1 - [Sum (k=0, k-1) {pk} + (p(k)/2) ]. It is called Q 
+                                            //as it uses a formulation that is essentially p_S = 1.0 - q_S.
+   std::vector <std::pair<int,double>> vP;  //vector of pairs with (k, ps) where ps = Sum(nobs+1, infinity) {pk} + (p(nobs)/2)
    
    double sumps=0.0;
    double sumpsps = 0.0;
@@ -47,6 +48,7 @@ std::pair<double,double> Compute(double mu,int kmin, int kmax){
    double sumzz = 0.0;
    
    double partialsum = 0.0;
+   double qpartialsum = 0.0;
    
    double pk;
    
@@ -100,8 +102,8 @@ std::pair<double,double> Compute(double mu,int kmin, int kmax){
        auto psQ = vQ[idx].second;
        auto psP = vP[idx].second;
       
-       double zQ = MyQuantile(psQ);
-       double zP = MyQuantile(psP);
+       double zQ = MyQuantile(psQ, 1);
+       double zP = MyQuantile(psP, 1);
        
        double z;
 
@@ -121,16 +123,22 @@ std::pair<double,double> Compute(double mu,int kmin, int kmax){
                  << " psP " << psP << " ZQ " << zQ << " ZP " << zP << " Chosen z " << z 
                  << " qsum " << std::scientific << std::setprecision(16) << 1.0-psum << std::endl;
        
-       sumps += pk*psQ;
+       sumps   += pk*psQ;
        sumpsps += pk*psQ*psQ;
        if(abs(z)<10.0){
-          sumz += pk*z;
+          sumz  += pk*z;
           sumzz += pk*z*z;
           partialsum += pk;
+       }
+       else{
+// Also keep track of fraction that is not included even in the [kmin, kmax] range.
+          qpartialsum += pk;
        }   
    }
    
-   std::cout << "partial sum = " << std::fixed << std::setprecision(16) << partialsum << std::endl;
+   std::cout << "mu, kmin, kmax " << mu << " " << kmin << " " << kmax << std::endl;
+   std::cout << "partial sum = " << std::scientific << std::setprecision(16) << partialsum << std::endl;
+   std::cout << "omitted part  " << std::scientific << std::setprecision(16) << qpartialsum << std::endl;
    
    double varx = sumpsps - sumps*sumps;
    double varz = sumzz - sumz*sumz;

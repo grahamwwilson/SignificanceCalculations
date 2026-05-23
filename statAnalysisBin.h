@@ -4,6 +4,8 @@ struct statAnalysisBin : AnalysisBin{
 //    double satChisqTotal {};                   // for parsing test
     bool operator < (const statAnalysisBin & aBin) const
     {
-         return abs(zscore) > abs(aBin.zscore);
+         return abs(zscore) > abs(aBin.zscore); // Order by descending |Z|
+//       return abs(zscore) < abs(aBin.zscore); // Order by ascending  |Z|
+
     }         
 };

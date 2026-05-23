@@ -52,6 +52,6 @@ struct AnalysisBin {
  // Standard sorting criterion    
     bool operator < (const AnalysisBin & aBin) const
     {
-        return satChisq > aBin.satChisq;
+        return satChisq > aBin.satChisq;   // Order by largest saturated chi-squared
     }
 };
