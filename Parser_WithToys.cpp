@@ -268,29 +268,34 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, bool lcorr, unsigned lon
              }
 
 // Current choice.
-// 1. |znew| < 1.0        Apply corrections for both bias and scale
-// 2. 1.0 < |znew| < 2.0  Apply only bias correction
-// 3. \znew| > 2.0.       Use conservative choice of either zscoreu or zscorel with no bias corrections
+// 1. |znew| < 1.25       Apply corrections for both bias and scale
+// 2. zupper > 2.0.       Use conservative choice of just zscoreu with no bias corrections
+// 3. zlower < -2.0       Use conservative choice of jsut zscorel with no bias corrections
+// else                   Use znew and ony apply bias correction not the scale correction (to avoid eg a Z-value of 2.0 getting scaled up erroneously to 3.0)
+//
+// Note bias scale corrections can be severe espeically for small mu. For mu=0.174 (the lowest value in SUS-23-003) 
+// Z is scaled up by 1.0/0.6217 = 1.61. So choice of 1.25 keeps a Z=1.25 < 2.0 ...
 
              double znewValue = znew;
  
-             if(std::abs(znewValue) < 1.0){
+             if(std::abs(znewValue) < 1.25){
                  znew = znewCorr;
                  zscoreError = zscoreErrorCorr;
              }
-             else if(std::abs(znewValue) < 2.0){
-                 znew = znew - zbias;
-             }
-             else if(znewValue >= 2.0){
+             else if(zupper >= 2.0){
 // switch to zupper and its error
                  znew = zupper;
                  zscoreError = std::get<7>(t);
              }
-             else if(znewValue <= -2.0){
+             else if(zlower <= -2.0){
 // switch to zlower and its error
                  znew = zlower;
                  zscoreError = std::get<9>(t);
              }
+             else{
+                 znew = znew - zbias;
+             }
+
 
              std::cout << "Assigned Z-value of " << znew << " +- " << zscoreError << std::endl;
  

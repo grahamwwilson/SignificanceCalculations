@@ -1,0 +1,60 @@
+HOWTO-ZSCORE.txt
+----------------
+
+To compile the basic executable.
+
+./clz.sh
+
+This compiles Parser_WithToys.cpp and makes an executable called Zscore.x 
+that is based around the Zscore analysis in SUS-23-003.
+
+The executable uses the CLI11 command line interface for argument passing.
+
+To check the options you can do:
+
+./Zscore.x -h
+"
+Calculate z-scores using toys from fit result file
+Usage: ./Zscore.x [OPTIONS]
+
+Options:
+  -h,--help                   Print this help message and exit
+  -n,--nfactor INT            Thousand toy multiplier
+  -p,--poissonOnly BOOLEAN    Boolean for Poisson Only
+  -s,--ntosave INT            Number of toys to save
+  -d,--ndivide INT            Divisor for quick test
+  --corrections,--no-corrections{false}
+                              Enable/disable Zscore corrections
+  -i,--infilename TEXT        Input file from fit to parse
+  -b,--baseseed UINT          Base seed for toys "
+
+The defaults are reasonable if you have 6 minutes to spare. 
+But for quick tests I'd advise setting the d value to something larger than the default of 1.
+Eg. 20.
+
+time ./Zscore.x -d 20 > Zscore_D20.out
+You can then examine the output file and the Analysis.root file.
+
+When ready to run with sufficient statistics the default (-d 1) is fine 
+and can be obtained using
+
+time ./Zscore.x > Zscore_D1.out
+
+This should result in every bin with Zscore < 5.0 having 
+an uncertainty of at most 0.01 in the Z score.
+
+The current implementation includes bias and scale corrections. 
+They are both applied if |ZS| < 1.0. 
+If 1.0 < |ZS| < 2.0 only the bias correction is applied.
+If |ZS| > 2.0 the calculation switches to the ZU estimate for excesses 
+and the ZL estimate for deficits.
+
+Beware of bins with too low values of mu that typically may only have a few 
+potential discrete outcomes where the continuous Z score concept makes less sense.
+
+The standard input file is not in the repository.
+
+Much of the code is still a bit specific to the analysis bins and 
+names etc of SUS-23-003.
+
+Graham Wilson, 23-MAY-2026.
