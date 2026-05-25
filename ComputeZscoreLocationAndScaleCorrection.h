@@ -11,7 +11,8 @@ std::pair<double,double> Compute(double mu, int kmin, int kmax, int printlevel=0
 // and compute the mean value and standard deviation for the symmetric Z-score variable 
 // through summation
 
-   if (printlevel!=0) std::cout << "mu " << mu << " kmin " << kmin << " kmax " << kmax << std::endl;
+   double CUT = 8.29; // Potentially can do this differently for +-ve and -ve Z.
+   if (printlevel!=0) std::cout << "mu " << mu << " kmin " << kmin << " kmax " << kmax << " CUT " << CUT << std::endl;
    
    double emu  = TMath::Exp(-mu);
    double bess = TMath::BesselI(0,2.0*mu);
@@ -78,19 +79,25 @@ std::pair<double,double> Compute(double mu, int kmin, int kmax, int printlevel=0
        auto pairP = std::make_pair(j, P); vP.push_back(pairP);       
    }
    
-// Now loop through all values   
+// Now loop through all possible experimental outcomes  
    
    for (int j=kmin; j<=kmax; j++){   
       
        int idx = j-kmin;
-       auto k = vp[idx].first;
-       auto pk = vp[idx].second;
-       auto psQ = vQ[idx].second;
-       auto psP = vP[idx].second;
+       auto k   = vp[idx].first;
+       auto pk  = vp[idx].second;  // Pr(k)
+       auto psQ = vQ[idx].second;  // Symmetrized upper tail probability using Q based approach 
+       auto psP = vP[idx].second;  // Symmetrized upper tail probability using P based approach - should be the same as psQ. 
       
        double zQ = MyQuantile(psQ);
        double zP = MyQuantile(psP);
        
+// Also keep track of zl and zu
+       double pU = psQ + 0.5*pk;
+       double pL = psQ - 0.5*pk;
+       double zu = MyQuantile(pU);
+       double zl = MyQuantile(pL); 
+
        double z;
 
 // Choose representation with better numerical precision
@@ -106,22 +113,51 @@ std::pair<double,double> Compute(double mu, int kmin, int kmax, int printlevel=0
        double psum = psP + 0.5*pk;
        
        if(printlevel!=0){
-           std::cout << "k: " << k << " p(k) " << pk << " psQ " << psQ 
-                     << " psP " << psP << " ZQ " << zQ << " ZP " << zP << " Chosen z " << z 
+           std::cout << "k: " << k << " p(k) " << pk << " psQ " << psQ << " psP " << psP 
+                     << " ZQ " << zQ << " ZP " << zP << " Chosen z " << z 
                      << " qsum " << std::scientific << std::setprecision(16) << 1.0-psum << std::endl;
        }
+
+       if(printlevel!=0){
+           std::cout << "k: " << k << " pL " << pL << " zL  " << zl << std::endl;
+           std::cout << "k: " << k << " pU " << pU << " zU  " << zu << std::endl;
+       }
+       std::cout << " " << std::endl;
        
        sumps   += pk*psQ;
        sumpsps += pk*psQ*psQ;
-       if(abs(z)<10.0){
-          sumz  += pk*z;
-          sumzz += pk*z*z;
+
+       double zthis = z;
+
+       if(zu >= 2.5){
+// Significant excesses
+// switch to zupper
+           zthis = zu;
+       }
+       else if(zl <= -2.5){
+// Significant deficits
+// switch to zlower
+           zthis = zl;
+       }
+       else if(std::abs(z) < 1.5){
+// Plan here for bias and scale correction
+           zthis = z;
+       }
+       else{
+// Plan just for bias correction
+           zthis = z;
+       }
+
+       if( abs(z) < CUT && abs(zu) < CUT && abs(zl) < CUT ) {
+          sumz  += pk*zthis;
+          sumzz += pk*zthis*zthis;
           partialsum += pk;
        }
        else{
 // Also keep track of fraction that is not included even in the [kmin, kmax] range.
           qpartialsum += pk;
        }   
+
    }
    
    double varx = sumpsps - sumps*sumps;
@@ -147,7 +183,7 @@ std::pair<double,double> Compute(double mu, int kmin, int kmax, int printlevel=0
        std::cout << " E(x^2) = " << std::fixed << std::setprecision(16) << sumzz << std::endl;
        std::cout << " Var(x) = " << std::fixed << std::setprecision(16) << varz << std::endl;
        std::cout << " SD(x)  = " << std::fixed << std::setprecision(16) << sqrt(varz) << std::endl;
-       std::cout << " " << std::endl;
+//       std::cout << " " << std::endl;
 
    }
    
