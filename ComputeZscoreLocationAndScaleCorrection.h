@@ -1,5 +1,5 @@
 
-std::pair<double,double> Compute(double mu, int kmin, int kmax, int printlevel=0){
+std::pair<double,double> Compute(double mu, int kmin, int kmax, int ztreatment, int printlevel=0){
 
 // Input quantities
 // mu:   Chosen Poisson mean
@@ -12,7 +12,8 @@ std::pair<double,double> Compute(double mu, int kmin, int kmax, int printlevel=0
 // through summation
 
    double CUT = 8.29; // Potentially can do this differently for +-ve and -ve Z.
-   if (printlevel!=0) std::cout << "mu " << mu << " kmin " << kmin << " kmax " << kmax << " CUT " << CUT << std::endl;
+   if (printlevel!=0) std::cout << "mu " << mu << " kmin " << kmin << " kmax " << kmax 
+                                << " ztreatment " << ztreatment << " CUT " << CUT << std::endl;
    
    double emu  = TMath::Exp(-mu);
    double bess = TMath::BesselI(0,2.0*mu);
@@ -121,41 +122,44 @@ std::pair<double,double> Compute(double mu, int kmin, int kmax, int printlevel=0
        if(printlevel!=0){
            std::cout << "k: " << k << " pL " << pL << " zL  " << zl << std::endl;
            std::cout << "k: " << k << " pU " << pU << " zU  " << zu << std::endl;
+           std::cout << " " << std::endl;
        }
-       std::cout << " " << std::endl;
        
        sumps   += pk*psQ;
        sumpsps += pk*psQ*psQ;
 
        double zthis = z;
 
-       if(zu >= 2.5){
+// Now default treatment is ztreatment = 1
+       if(ztreatment == 1){
+           if(zu >= 2.5){
 // Significant excesses
 // switch to zupper
-           zthis = zu;
-       }
-       else if(zl <= -2.5){
+               zthis = zu;
+           }
+           else if(zl <= -2.5){
 // Significant deficits
 // switch to zlower
-           zthis = zl;
-       }
-       else if(std::abs(z) < 1.5){
+               zthis = zl;
+           }
+           else if(std::abs(z) < 1.5){
 // Plan here for bias and scale correction
-           zthis = z;
-       }
-       else{
+               zthis = z;
+           }
+           else{
 // Plan just for bias correction
-           zthis = z;
+               zthis = z;
+           }
        }
 
        if( abs(z) < CUT && abs(zu) < CUT && abs(zl) < CUT ) {
-          sumz  += pk*zthis;
-          sumzz += pk*zthis*zthis;
-          partialsum += pk;
+           sumz  += pk*zthis;
+           sumzz += pk*zthis*zthis;
+           partialsum += pk;
        }
        else{
 // Also keep track of fraction that is not included even in the [kmin, kmax] range.
-          qpartialsum += pk;
+           qpartialsum += pk;
        }   
 
    }
@@ -239,7 +243,7 @@ std::pair<double,double> ComputePoissonOnlyStats(int nObs, double mu){
 
 }
 
-std::pair<double,double> ComputeZscoreLocationAndScaleCorrection(double mu, int printlevel=0){
+std::pair<double,double> ComputeZscoreLocationAndScaleCorrection(double mu, int ztreatment, int printlevel=0){
 
 // Driver function for Zscore bias computation used for standardization of Zscore statisic
 
@@ -254,40 +258,40 @@ std::pair<double,double> ComputeZscoreLocationAndScaleCorrection(double mu, int 
                   << mu << std::endl;
         int kmin = 0;
         int kmax = 20;
-        result = Compute(0.075, kmin, kmax, printlevel);
+        result = Compute(0.075, kmin, kmax, ztreatment, printlevel);
     }
     else if ( mu < 1.0 ){
         int kmin = 0;
         int kmax = 20;
-        result = Compute(mu, kmin, kmax, printlevel);
+        result = Compute(mu, kmin, kmax, ztreatment, printlevel);
     }
     else if ( mu >= 1.0 && mu < 5.0 ){
         int kmin = 0;
         int kmax = 50;
-        result = Compute(mu, kmin, kmax, printlevel);
+        result = Compute(mu, kmin, kmax, ztreatment, printlevel);
     }
     else if ( mu >= 5.0 && mu < 10.0 ){
         int kmin = 0;
         int kmax = 80;
-        result = Compute(mu, kmin, kmax, printlevel);
+        result = Compute(mu, kmin, kmax, ztreatment, printlevel);
     }
     else if ( mu >= 10.0 && mu < 25.0 ){
         int kmin = 0;
         int kmax = 100;
-        result = Compute(mu, kmin, kmax, printlevel);
+        result = Compute(mu, kmin, kmax, ztreatment, printlevel);
     }
     else if ( mu >= 25.0 && mu < 100.0 ){
         int kmin = 0;
         int kmax = 250;
-        result = Compute(mu, kmin, kmax, printlevel);
+        result = Compute(mu, kmin, kmax, ztreatment, printlevel);
     }
     else if ( mu >= 100.0 && mu < 300.0 ){
         int kmin = 0;
         int kmax = 1000;
-        result = Compute(mu, kmin, kmax, printlevel);
+        result = Compute(mu, kmin, kmax, ztreatment, printlevel);
     }
     else{
-        std::cout << "Zscore corrections for large mu are tiny and neglected."
+        std::cout << "Zscore corrections for large mu are SMALL and neglected."
                   << " Setting (bias, scale) corrections to (0.0, 1.0) for mu = "
                   << mu << std::endl;
     }

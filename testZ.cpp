@@ -33,7 +33,7 @@ int main(int argc, char** argv){
 // do infinite sums. So instead of summing from k=0, k=infinity, we sum from k=kmin, k=kmax.
 // For small values of mu we of course can start at k=0.
  
-    CLI::App app{"Compute Z-score expected values, Version 6"};
+    CLI::App app{"Compute Z-score expected values, Version 7"};
     
     double mumin=1.0;
     double mumax=300.0;
@@ -42,6 +42,7 @@ int main(int argc, char** argv){
     int kmin=0;
     int kmax=40;
     int printlevel=0;
+    int ztreatment=1;
     std::string part = "All";
     
     app.add_option("--mumin", mumin, "Poisson mean minimum in scan");
@@ -52,6 +53,7 @@ int main(int argc, char** argv){
     app.add_option("-l,--kmax", kmax, "Maximum count, kmax");   
     app.add_option("-s,--part", part, "Part string for file name"); 
     app.add_option("-p,--printlevel", printlevel, "Print level");
+    app.add_option("-z,--ztreatment", ztreatment, "Z treatment [0 = none, 1 = switch (default)");
               
     CLI11_PARSE(app, argc, argv);
     
@@ -63,7 +65,7 @@ int main(int argc, char** argv){
     std::cout << "kmax  " << kmax << std::endl;
     std::cout << "part  " << part << std::endl;
     std::cout << "printlevel " << printlevel << std::endl;
-
+    std::cout << "ztreatment " << ztreatment << std::endl;
     
     std::ofstream foutmean("ZScore-Calculator-Mean-"+part+".tpl"); 
     std::ofstream foutsd("ZScore-Calculator-SD-"+part+".tpl");           
@@ -85,7 +87,7 @@ int main(int argc, char** argv){
         }
         else{
 // Use kmin, kmax as hard-coded in ComputeZscoreLocationAndScaleCorrection. This is the default.
-            result = ComputeZscoreLocationAndScaleCorrection(mu, printlevel);
+            result = ComputeZscoreLocationAndScaleCorrection(mu, ztreatment, printlevel);
         }
         foutmean << mu << " " << result.first << " " << result.second << std::endl;
         foutsd   << mu << " " << result.second << " " << result.first << std::endl;                

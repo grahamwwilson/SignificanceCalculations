@@ -35,7 +35,7 @@ bool sort_by_abszscore( const statAnalysisBin & lhs, const statAnalysisBin & rhs
 }
 
 
-void Parser(int nfactor, bool PoissonOnly, int ndivide, bool lcorr, unsigned long int baseseed, std::string infile){
+void Parser(int nfactor, bool PoissonOnly, int ndivide, bool lcorr, int ztreatment, int ytreatment, unsigned long int baseseed, int fileFormat, std::string infile){
 
     // cout << "Hello from Parser " << endl;
     
@@ -79,12 +79,20 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, bool lcorr, unsigned lon
     
     ifstream myfile(infile);
     
-    int f1;    // nobs
-    string f2; // regionName
-    int f3;    // binNumber
-    double f4, f5, f6, f7, f8, f9, f10; // prePull etc.
+    int binID;    // binID
+    string regionName; // regionName
+    int subBin;    // binNumber
+    double f4, f5, f6;
+    int nobsRead;
+    double f8;
+    double postfitMeanRead, postfitMeanErrRead;
 
     string line;
+
+// Passed as input argument now.
+//    int fileFormat;
+//    fileFormat = 1;   // SUS-23-003 files. 10 elements: binID, regionName, binNumber, Pull1, Pull2, Pull3, nObs, prefitMean, postfitMean, postfitMeanErr 
+//    fileFormat = 2;   // Slimmed down version from Zach with only 5 elements: binID, regionName, postfitMean, postfitMeanErr, nObs
 
     if( myfile.is_open() ){
  
@@ -93,27 +101,33 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, bool lcorr, unsigned lon
 
              stringstream ss(line);
 
-             ss >> f1 >> f2 >> f3 >> f4 >> f5 >> f6 >> f7 >> f8 >> f9 >> f10;
-//             cout << f1 << " " << f2 << " " << f3 << " " << f4 << " " << f5 << " " 
-//                  << f6 << " " << f7 << " " << f8 << " " << f9 << " " << f10 << endl;
+             if(fileFormat==1){ // SUS-23-003 format
+                ss >> binID >> regionName >> subBin >> f4 >> f5 >> f6 >> nobsRead >> f8 >> postfitMeanRead >> postfitMeanErrRead;
+             }
+             else if(fileFormat==2){ // Zach's format 
+                ss >> binID >> regionName >> postfitMeanRead >> postfitMeanErrRead >> nobsRead;
+                subBin = 1;
+             }
+             else{
+                std::cout << "Unsupported fileFormat " << fileFormat << endl;
+             }
                   
              struct AnalysisBin aBin;
              
              // First calculate the satChisq contribution from this bin
-             int nobs = int(f7+0.01);     // ndata
-             double y = f9;               // expected
+             double y = postfitMeanRead;               // expected
              double satChisq;
-             double n = double(nobs);
+             double n = double(nobsRead);
       // Use Baker and Cousins Poisson formula.  NIM 221 (1984) 437.
       // This ignores completely the postfit uncertainty.
-             if(nobs == 0){
+             if(nobsRead == 0){
                  satChisq = 2.0*(y - n);
              }
              else{
                  satChisq = 2.0*(y - n + n*log(n/y) );
              }
              
-             aBin = {f1, f2, nobs, int(f3+0.01), f9, f10, satChisq};
+             aBin = {binID, regionName, nobsRead, subBin, postfitMeanRead, postfitMeanErrRead, satChisq};
              vAnaBins.push_back(aBin);       
              
         }
@@ -238,7 +252,7 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, bool lcorr, unsigned lon
 
              if(lcorr){
 // Compute zscore bias and scale corrections. These DO NOT DEPEND on random numbers.
-                 result = ComputeZscoreLocationAndScaleCorrection( postfitMean );
+                 result = ComputeZscoreLocationAndScaleCorrection( postfitMean, ztreatment);
                  zbias = result.first;
                  zscaleSD = result.second;
              }
@@ -277,23 +291,35 @@ void Parser(int nfactor, bool PoissonOnly, int ndivide, bool lcorr, unsigned lon
 // Z is scaled up by 1.0/0.6217 = 1.61. So choice of 1.5 keeps a Z=1.5 < 2.5 ...
 
              double znewValue = znew;
- 
-             if(zupper >= 2.5){
-// switch to zupper and its error
-                 znew = zupper;
-                 zscoreError = std::get<7>(t);
-             }
-             else if(zlower <= -2.5){
-// switch to zlower and its error
-                 znew = zlower;
-                 zscoreError = std::get<9>(t);
-             }
-             else if(std::abs(znewValue) < 1.5){
-                 znew = znewCorr;
-                 zscoreError = zscoreErrorCorr;
+
+             if(ytreatment == 1){
+                 if(zupper >= 2.5){
+// switch to zupper and its error as this is more conservative and in keeping with standard practice of fully including p(nobs)
+// ie. symmetrization is not a compelling motivation in this regime
+                     znew = zupper;
+                     zscoreError = std::get<7>(t);
+                 }
+                 else if(zlower <= -2.5){
+// switch to zlower and its error as this is more conservative and in keeping with standard practice of fully including p(nobs)
+// ie. symmetrization is not a compelling motivation in this regime
+                     znew = zlower;
+                     zscoreError = std::get<9>(t);
+                 }
+                 else if(std::abs(znewValue) < 1.5){
+// Adopt computed bias and scale corrections
+                     znew = znewCorr;
+                     zscoreError = zscoreErrorCorr;
+                 }
+                 else{
+// Only include the bias correction in this intermediate regime
+                     znew = znew - zbias;
+                 }
+
              }
              else{
-                 znew = znew - zbias;
+// Here we just use the symmetrized p-value. Tends to over-estimate the significance of large deviations.
+                 znew = znewCorr;
+                 zscoreError = zscoreErrorCorr;
              }
 
 
@@ -399,13 +425,23 @@ int main(int argc, char** argv){
 
     bool lcorr = true;
     app.add_flag("--corrections,!--no-corrections",lcorr,"Enable/disable Zscore corrections");
+
+    int fileFormat = 2;
+    app.add_option("-f,--fileformat", fileFormat, "fileFormat (1-Old (Default), 2=New)"); 
     
-    std::string infilename = "B135_7-7-24_all_Modified_V1.txt";
+//    std::string infilename = "B135_7-7-24_all_Modified_V1.txt";
+    std::string infilename = "ZachWithBinIDs_V1.txt";
     app.add_option("-i,--infilename", infilename, "Input file from fit to parse");  
     
     unsigned long int baseseed = 123456L;
 //    unsigned long int baseseed = 125900L;    
-    app.add_option("-b,--baseseed", baseseed, "Base seed for toys");    
+    app.add_option("-b,--baseseed", baseseed, "Base seed for toys");
+
+    int ztreatment = 1;
+    app.add_option("-z,--ztreatment", ztreatment, "Z treatment in Compute [0 = none, 1 = switch (default)"); 
+
+    int ytreatment = 1;
+    app.add_option("-y,--ytreatment", ytreatment, "Z treatment in Parser_WithToys [0 = none, 1 = switch (default)"); 
               
     CLI11_PARSE(app, argc, argv);
     
@@ -415,12 +451,15 @@ int main(int argc, char** argv){
     std::cout << "ndivide " << ndivide << std::endl;
     std::cout << "lcorr   " << lcorr << std::endl;
     std::cout << "baseseed " << baseseed << std::endl;
-    std::cout << "infilename " << infilename << std::endl;   
+    std::cout << "infilename " << infilename << std::endl;
+    std::cout << "fileFormat " << fileFormat << std::endl;
+    std::cout << "ztreatment " << ztreatment << std::endl;
+    std::cout << "ytreatment " << ztreatment << std::endl;
     
 // Global value
     NTOSAVE = ntosave;
 
-    Parser(nfactor, poissonOnly, ndivide, lcorr, baseseed, infilename);
+    Parser(nfactor, poissonOnly, ndivide, lcorr, ztreatment, ytreatment, baseseed, fileFormat, infilename);
     
 // Sort global toys vector
     std::sort(vtoys.begin(), vtoys.end());
