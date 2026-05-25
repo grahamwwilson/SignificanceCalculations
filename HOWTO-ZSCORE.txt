@@ -25,10 +25,13 @@ Options:
   -d,--ndivide INT            Divisor for quick test
   --corrections,--no-corrections{false}
                               Enable/disable Zscore corrections
+  -f,--fileformat INT         fileFormat (1-Old (Default), 2=New)
   -i,--infilename TEXT        Input file from fit to parse
-  -b,--baseseed UINT          Base seed for toys "
+  -b,--baseseed UINT          Base seed for toys
+  -z,--ztreatment INT         Z treatment in Compute [0 = none, 1 = switch (default)
+  -y,--ytreatment INT         Z treatment in Parser_WithToys [0 = none, 1 = switch (default)"
 
-The defaults are reasonable if you have 6 minutes to spare. 
+The defaults are reasonable if you have 6 minutes to spare.
 But for quick tests I'd advise setting the d value to something larger than the default of 1.
 Eg. 20.
 
@@ -43,18 +46,21 @@ time ./Zscore.x > Zscore_D1.out
 This should result in every bin with Zscore < 5.0 having 
 an uncertainty of at most 0.01 in the Z score.
 
-The current implementation includes bias and scale corrections. 
-They are both applied if |ZS| < 1.0. 
-If 1.0 < |ZS| < 2.0 only the bias correction is applied.
-If |ZS| > 2.0 the calculation switches to the ZU estimate for excesses 
-and the ZL estimate for deficits.
+The current implementation by default includes bias and scale corrections (ytreatment) 
+evaluated in the Poisson-only approximation.
+If ZU > 2.5 or ZL < -2.5 the calculation SWITCHES to the ZU estimate for excesses 
+and the ZL estimate for deficits with no bias/scale correction applied.
+If |ZS| < 1.5, ZS is used and the ZS bias and scale correction is included.
+Else, ZS is used and the ZS bias correction only is included.
+
+The bias/scale corrections themselves are evaluated in Compute using either 
+ztreatment = 0 (use ZS everywhere) or ztreatment = 1 (similar to above switching logic). 
 
 Beware of bins with too low values of mu that typically may only have a few 
 potential discrete outcomes where the continuous Z score concept makes less sense.
 
 The standard input file is not in the repository.
 
-Much of the code is still a bit specific to the analysis bins and 
-names etc of SUS-23-003.
+Much of the code is still a bit specific to the analysis bins and names etc of SUS-23-003.
 
 Graham Wilson, 23-MAY-2026.
